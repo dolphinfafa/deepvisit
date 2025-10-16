@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}员工管理{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>员工管理</h2>
+    <button class="btn btn-primary" onclick="showCreateModal()">+ 新增员工</button>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="搜索员工姓名、用户名、电话...">
+        <button class="btn btn-success" onclick="loadData()">查询</button>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>用户名</th>
+                <th>姓名</th>
+                <th>电话</th>
+                <th>邮箱</th>
+                <th>部门</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 40px;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<div class="modal" id="createModal">
+    <div class="modal-content">
+        <h3>新增员工</h3>
+        <form id="createForm">
+            <div class="form-group">
+                <label>用户名 *</label>
+                <input type="text" name="username" required>
+            </div>
+            <div class="form-group">
+                <label>姓名 *</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>邮箱 *</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>电话</label>
+                <input type="text" name="phone">
+            </div>
+            <div class="form-group">
+                <label>部门</label>
+                <input type="text" name="department">
+            </div>
+            <div class="form-group">
+                <label>初始密码</label>
+                <input type="password" name="password" value="123456">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="button" class="btn" onclick="closeModal()" style="background: #95a5a6; color: white;">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadData(page = 1) {
+        const search = document.getElementById('searchInput').value;
+        const data = await fetchAPI(`/system/api/user/list?page=${page}&search=${search}`);
+        
+        if (data && data.success) {
+            renderTable(data.data);
+            renderPagination(data.total, 20, page);
+        }
+    }
+    
+    function renderTable(items) {
+        const tbody = document.getElementById('tableBody');
+        
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = items.map(item => `
+            <tr>
+                <td>${item.username}</td>
+                <td>${item.name}</td>
+                <td>${item.phone || '-'}</td>
+                <td>${item.email}</td>
+                <td>${item.department || '-'}</td>
+                <td>${item.role || '-'}</td>
+                <td><span class="badge ${item.is_active ? 'badge-success' : 'badge-danger'}">${item.is_active ? '启用' : '禁用'}</span></td>
+                <td>${formatDate(item.created_at)}</td>
+                <td>
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px;">编辑</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function renderPagination(total, perPage, current) {
+        const totalPages = Math.ceil(total / perPage);
+        const pagination = document.getElementById('pagination');
+        
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="${i === current ? 'active' : ''}" onclick="loadData(${i})">${i}</button>`;
+        }
+        
+        pagination.innerHTML = html;
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString('zh-CN');
+    }
+    
+    function showCreateModal() {
+        document.getElementById('createModal').classList.add('show');
+    }
+    
+    function closeModal() {
+        document.getElementById('createModal').classList.remove('show');
+        document.getElementById('createForm').reset();
+    }
+    
+    document.getElementById('createForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        const result = await fetchAPI('/system/api/user/create', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        
+        if (result && result.success) {
+            showMessage('创建成功');
+            closeModal();
+            loadData();
+        } else {
+            showMessage(result.message || '创建失败', 'error');
+        }
+    });
+    
+    loadData();
+</script>
+{% endblock %}
+

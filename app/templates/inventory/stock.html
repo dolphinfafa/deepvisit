@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}库存查询{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>库存查询</h2>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <select>
+            <option>全部仓库</option>
+            <option>启光仓库</option>
+            <option>直营商仓库</option>
+        </select>
+        <button class="btn btn-success">查询</button>
+    </div>
+    <p style="text-align: center; padding: 40px; color: #666;">库存列表将在此显示</p>
+</div>
+{% endblock %}
+

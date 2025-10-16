@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}终端客户管理{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>终端客户管理</h2>
+    <button class="btn btn-primary" onclick="showCreateModal()">+ 新增终端</button>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="搜索客户名称、编号、手机号..." onkeyup="searchCustomers()">
+        <select id="statusFilter" onchange="loadData()">
+            <option value="">全部状态</option>
+            <option value="pending">待审批</option>
+            <option value="approved">已通过</option>
+            <option value="rejected">已拒绝</option>
+        </select>
+        <button class="btn btn-success" onclick="loadData()">查询</button>
+    </div>
+    
+    <table class="table" id="dataTable">
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>名称</th>
+                <th>类型</th>
+                <th>客户经理</th>
+                <th>电话</th>
+                <th>地址</th>
+                <th>合作状态</th>
+                <th>审批状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr>
+                <td colspan="10" style="text-align: center; padding: 40px;">加载中...</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- 新增/编辑模态框 -->
+<div class="modal" id="createModal">
+    <div class="modal-content">
+        <h3>新增终端客户</h3>
+        <form id="createForm">
+            <div class="form-group">
+                <label>客户编码 *</label>
+                <input type="text" name="code" required>
+            </div>
+            <div class="form-group">
+                <label>客户名称 *</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>类型</label>
+                <select name="type">
+                    <option value="餐饮">餐饮</option>
+                    <option value="零售">零售</option>
+                    <option value="批发">批发</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>客户等级</label>
+                <select name="level">
+                    <option value="A">A级</option>
+                    <option value="B">B级</option>
+                    <option value="C">C级</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>拜访频率</label>
+                <select name="visit_frequency">
+                    <option value="每天">每天</option>
+                    <option value="每周">每周</option>
+                    <option value="每月">每月</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>电话</label>
+                <input type="text" name="phone">
+            </div>
+            <div class="form-group">
+                <label>地址</label>
+                <input type="text" name="address">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="button" class="btn" onclick="closeModal()" style="background: #95a5a6; color: white;">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+    
+    async function loadData(page = 1) {
+        const search = document.getElementById('searchInput').value;
+        const status = document.getElementById('statusFilter').value;
+        
+        const data = await fetchAPI(`/customer/api/terminal/list?page=${page}&search=${search}&status=${status}`);
+        
+        if (data && data.success) {
+            renderTable(data.data);
+            renderPagination(data.total, data.per_page, page);
+            currentPage = page;
+        }
+    }
+    
+    function renderTable(items) {
+        const tbody = document.getElementById('tableBody');
+        
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = items.map(item => `
+            <tr>
+                <td>${item.code}</td>
+                <td>${item.name}</td>
+                <td>${item.type || '-'}</td>
+                <td>${item.manager || '-'}</td>
+                <td>${item.phone || '-'}</td>
+                <td>${item.address || '-'}</td>
+                <td><span class="badge badge-success">${item.cooperation_status || '-'}</span></td>
+                <td>${getStatusBadge(item.approval_status)}</td>
+                <td>${formatDate(item.created_at)}</td>
+                <td>
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="viewDetail(${item.id})">查看</button>
+                    <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="deleteItem(${item.id})">删除</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function renderPagination(total, perPage, current) {
+        totalPages = Math.ceil(total / perPage);
+        const pagination = document.getElementById('pagination');
+        
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="${i === current ? 'active' : ''}" onclick="loadData(${i})">${i}</button>`;
+        }
+        
+        pagination.innerHTML = html;
+    }
+    
+    function getStatusBadge(status) {
+        const statusMap = {
+            'pending': '<span class="badge badge-warning">待审批</span>',
+            'approved': '<span class="badge badge-success">已通过</span>',
+            'rejected': '<span class="badge badge-danger">已拒绝</span>'
+        };
+        return statusMap[status] || '<span class="badge badge-info">未知</span>';
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString('zh-CN');
+    }
+    
+    function showCreateModal() {
+        document.getElementById('createModal').classList.add('show');
+    }
+    
+    function closeModal() {
+        document.getElementById('createModal').classList.remove('show');
+        document.getElementById('createForm').reset();
+    }
+    
+    document.getElementById('createForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        const result = await fetchAPI('/customer/api/terminal/create', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        
+        if (result && result.success) {
+            showMessage('创建成功');
+            closeModal();
+            loadData(currentPage);
+        }
+    });
+    
+    async function deleteItem(id) {
+        if (!confirm('确定要删除这个客户吗？')) return;
+        
+        const result = await fetchAPI(`/customer/api/terminal/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (result && result.success) {
+            showMessage('删除成功');
+            loadData(currentPage);
+        }
+    }
+    
+    function searchCustomers() {
+        clearTimeout(window.searchTimeout);
+        window.searchTimeout = setTimeout(() => loadData(1), 500);
+    }
+    
+    // 初始加载
+    loadData();
+</script>
+{% endblock %}
+

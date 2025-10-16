@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}客户联系人管理{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>客户联系人管理</h2>
+    <button class="btn btn-primary" onclick="showCreateModal()">+ 新增联系人</button>
+</div>
+
+<div class="content-box">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>客户类型</th>
+                <th>电话</th>
+                <th>职务</th>
+                <th>是否主联系人</th>
+                <th>备注</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px;">暂无数据</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+

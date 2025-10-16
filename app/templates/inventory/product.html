@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}商品管理{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>商品管理</h2>
+    <button class="btn btn-primary" onclick="alert('功能开发中')">+ 新增商品</button>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <input type="text" placeholder="搜索商品名称、编码...">
+        <button class="btn btn-success">查询</button>
+    </div>
+    <p style="text-align: center; padding: 40px; color: #666;">商品列表将在此显示</p>
+</div>
+{% endblock %}
+

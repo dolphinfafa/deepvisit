@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}销售订单管理{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>销售订单管理</h2>
+    <button class="btn btn-primary" onclick="alert('功能开发中')">+ 新增订单</button>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <input type="text" placeholder="搜索订单编号、客户名称...">
+        <button class="btn btn-success">查询</button>
+    </div>
+    <p style="text-align: center; padding: 40px; color: #666;">销售订单列表将在此显示</p>
+</div>
+{% endblock %}
+
