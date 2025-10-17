@@ -14,7 +14,7 @@ class Activity(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    creator = db.relationship('User', foreign_keys=[created_by], backref='created_activities')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_activities', lazy='select')
     reports = db.relationship('ActivityReport', backref='activity', lazy='dynamic')
     
     def to_dict(self):
@@ -49,7 +49,7 @@ class ActivityReport(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    reporter = db.relationship('User', foreign_keys=[reported_by], backref='activity_reports')
+    reporter = db.relationship('User', foreign_keys=[reported_by], backref='activity_reports', lazy='select')
     
     def to_dict(self):
         """转换为字典"""

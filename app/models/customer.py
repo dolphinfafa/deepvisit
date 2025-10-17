@@ -36,8 +36,8 @@ class Terminal(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    manager = db.relationship('User', foreign_keys=[manager_id], backref='managed_terminals')
-    assistant = db.relationship('User', foreign_keys=[assistant_id], backref='assisted_terminals')
+    manager = db.relationship('User', foreign_keys=[manager_id], backref='managed_terminals', lazy='select')
+    assistant = db.relationship('User', foreign_keys=[assistant_id], backref='assisted_terminals', lazy='select')
     
     def to_dict(self):
         """转换为字典"""
@@ -106,8 +106,8 @@ class DirectDistributor(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    manager = db.relationship('User', foreign_keys=[manager_id], backref='managed_distributors')
-    assistant = db.relationship('User', foreign_keys=[assistant_id], backref='assisted_distributors')
+    manager = db.relationship('User', foreign_keys=[manager_id], backref='managed_distributors', lazy='select')
+    assistant = db.relationship('User', foreign_keys=[assistant_id], backref='assisted_distributors', lazy='select')
     
     def to_dict(self):
         return {
@@ -172,7 +172,7 @@ class KOL(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    manager = db.relationship('User', foreign_keys=[manager_id], backref='managed_kols')
+    manager = db.relationship('User', foreign_keys=[manager_id], backref='managed_kols', lazy='select')
     
     def to_dict(self):
         return {

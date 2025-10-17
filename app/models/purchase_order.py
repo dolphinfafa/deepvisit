@@ -29,8 +29,8 @@ class PurchaseOrder(db.Model):
     # 关系
     supplier = db.relationship('Supplier', backref='purchase_orders')
     warehouse = db.relationship('Warehouse', backref='purchase_orders')
-    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_purchase_orders')
-    creator = db.relationship('User', foreign_keys=[created_by], backref='created_purchase_orders')
+    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_purchase_orders', lazy='select')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_purchase_orders', lazy='select')
     
     def to_dict(self):
         return {

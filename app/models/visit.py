@@ -22,7 +22,7 @@ class VisitPlan(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_plans')
+    visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_plans', lazy='select')
     
     def to_dict(self):
         return {
@@ -55,8 +55,8 @@ class VisitRoute(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_routes')
-    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_routes')
+    visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_routes', lazy='select')
+    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_routes', lazy='select')
     
     def to_dict(self):
         import json
@@ -135,7 +135,7 @@ class VisitRecord(db.Model):
     photos = db.Column(db.Text)  # JSON格式存储其他照片
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_records')
+    visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_records', lazy='select')
     plan = db.relationship('VisitPlan', backref='records')
     
     def to_dict(self):

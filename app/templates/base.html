@@ -26,11 +26,17 @@
             color: #333;
             font-size: 16px;
             line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
         }
         
         .container {
             display: flex;
             min-height: 100vh;
+            width: 100%;
+            max-width: 100%;
         }
         
         .sidebar {
@@ -81,6 +87,8 @@
             flex: 1;
             margin-left: 250px;
             padding: 24px;
+            width: calc(100% - 250px);
+            min-width: 0;
         }
         
         .header {
@@ -366,6 +374,7 @@
             .main-content {
                 margin-left: 200px;
                 padding: 16px;
+                width: calc(100% - 200px);
             }
             
             .header h2 {
@@ -393,10 +402,24 @@
             .main-content {
                 margin-left: 180px;
                 padding: 12px;
+                width: calc(100% - 180px);
             }
             
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 超小屏幕适配 */
+        @media (max-width: 360px) {
+            .sidebar {
+                width: 160px;
+            }
+            
+            .main-content {
+                margin-left: 160px;
+                padding: 8px;
+                width: calc(100% - 160px);
             }
         }
     </style>

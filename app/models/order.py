@@ -29,8 +29,8 @@ class SalesOrder(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    salesman = db.relationship('User', foreign_keys=[salesman_id], backref='sales_orders')
-    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_orders')
+    salesman = db.relationship('User', foreign_keys=[salesman_id], backref='sales_orders', lazy='select')
+    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_orders', lazy='select')
     
     def to_dict(self):
         return {
@@ -88,9 +88,9 @@ class ReturnOrder(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    salesman = db.relationship('User', foreign_keys=[salesman_id], backref='return_orders')
-    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_return_orders')
-    receiver = db.relationship('User', foreign_keys=[received_by], backref='received_return_orders')
+    salesman = db.relationship('User', foreign_keys=[salesman_id], backref='return_orders', lazy='select')
+    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_return_orders', lazy='select')
+    receiver = db.relationship('User', foreign_keys=[received_by], backref='received_return_orders', lazy='select')
     sales_order = db.relationship('SalesOrder', backref='return_orders')
     
     def to_dict(self):
@@ -148,8 +148,8 @@ class DeliveryOrder(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     sales_order = db.relationship('SalesOrder', backref='delivery_orders')
-    salesman = db.relationship('User', foreign_keys=[salesman_id], backref='delivery_orders')
-    shipper = db.relationship('User', foreign_keys=[shipped_by], backref='shipped_delivery_orders')
+    salesman = db.relationship('User', foreign_keys=[salesman_id], backref='delivery_orders', lazy='select')
+    shipper = db.relationship('User', foreign_keys=[shipped_by], backref='shipped_delivery_orders', lazy='select')
     
     def to_dict(self):
         return {
