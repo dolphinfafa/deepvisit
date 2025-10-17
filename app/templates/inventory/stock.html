@@ -9,14 +9,234 @@
 
 <div class="content-box">
     <div class="search-bar">
-        <select>
-            <option>全部仓库</option>
-            <option>启光仓库</option>
-            <option>直营商仓库</option>
+        <select id="warehouseTypeFilter">
+            <option value="">全部仓库</option>
+            <option value="qiguang">启光仓库</option>
+            <option value="direct_sales">直营商仓库</option>
         </select>
-        <button class="btn btn-success">查询</button>
+        <select id="warehouseFilter">
+            <option value="">全部仓库</option>
+        </select>
+        <button class="btn btn-success" onclick="searchStocks()">查询</button>
     </div>
-    <p style="text-align: center; padding: 40px; color: #666;">库存列表将在此显示</p>
+    
+    <!-- 库存汇总 -->
+    <div class="stats-grid" id="summaryCards">
+        <!-- 汇总信息将通过JavaScript加载 -->
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>仓库名称</th>
+                    <th>仓库类型</th>
+                    <th>商品编码</th>
+                    <th>商品名称</th>
+                    <th>规格</th>
+                    <th>单位</th>
+                    <th>库存数量</th>
+                    <th>成本单价</th>
+                    <th>库存总价值</th>
+                    <th>最低库存</th>
+                    <th>最高库存</th>
+                    <th>更新时间</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody">
+                <!-- 数据将通过JavaScript加载 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination" id="pagination">
+        <!-- 分页将通过JavaScript生成 -->
+    </div>
 </div>
+
+<script>
+let currentPage = 1;
+let warehouses = [];
+
+// 页面加载时获取库存列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadWarehouses();
+    loadStocks();
+});
+
+// 加载仓库列表
+function loadWarehouses() {
+    fetch('/inventory/api/warehouse/list?per_page=1000')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                warehouses = data.data;
+                updateWarehouseFilter();
+            }
+        });
+}
+
+// 更新仓库筛选器
+function updateWarehouseFilter() {
+    const select = document.getElementById('warehouseFilter');
+    select.innerHTML = '<option value="">全部仓库</option>';
+    
+    warehouses.forEach(warehouse => {
+        const option = document.createElement('option');
+        option.value = warehouse.id;
+        option.textContent = warehouse.name;
+        select.appendChild(option);
+    });
+}
+
+// 加载库存列表
+function loadStocks(page = 1) {
+    const warehouseType = document.getElementById('warehouseTypeFilter').value;
+    const warehouseId = document.getElementById('warehouseFilter').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 20,
+        warehouse_type: warehouseType,
+        warehouse_id: warehouseId
+    });
+    
+    fetch(`/inventory/api/stock/list?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderStockTable(data.data);
+                renderPagination(data.total, page);
+                currentPage = page;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载库存列表失败');
+        });
+}
+
+// 加载库存汇总
+function loadStockSummary() {
+    const warehouseType = document.getElementById('warehouseTypeFilter').value;
+    
+    const params = new URLSearchParams({
+        warehouse_type: warehouseType
+    });
+    
+    fetch(`/inventory/api/stock/summary?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderSummaryCards(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// 渲染汇总卡片
+function renderSummaryCards(summaryData) {
+    const container = document.getElementById('summaryCards');
+    container.innerHTML = '';
+    
+    summaryData.forEach(summary => {
+        const card = document.createElement('div');
+        card.className = 'stat-card';
+        card.innerHTML = `
+            <div class="stat-number">${summary.product_count}</div>
+            <div class="stat-label">${summary.warehouse_name}</div>
+            <div style="margin-top: 8px; font-size: 14px; color: #666;">
+                <div>总库存: ${summary.total_quantity}</div>
+                <div>总价值: ¥${summary.total_value.toFixed(2)}</div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 渲染库存表格
+function renderStockTable(stocks) {
+    const tbody = document.getElementById('stockTableBody');
+    tbody.innerHTML = '';
+    
+    stocks.forEach(stock => {
+        const typeText = stock.warehouse_type === 'qiguang' ? '启光仓库' : 
+                        stock.warehouse_type === 'direct_sales' ? '直营商仓库' : '未知';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${stock.warehouse_name || ''}</td>
+            <td>${typeText}</td>
+            <td>${stock.product ? stock.product.code : ''}</td>
+            <td>${stock.product ? stock.product.name : ''}</td>
+            <td>${stock.product ? stock.product.specification : ''}</td>
+            <td>${stock.product ? stock.product.unit : ''}</td>
+            <td class="${stock.quantity <= stock.min_stock ? 'low-stock' : ''}">${stock.quantity}</td>
+            <td>¥${stock.cost.toFixed(2)}</td>
+            <td>¥${stock.total_cost.toFixed(2)}</td>
+            <td>${stock.min_stock}</td>
+            <td>${stock.max_stock}</td>
+            <td>${stock.updated_at ? new Date(stock.updated_at).toLocaleString() : ''}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 渲染分页
+function renderPagination(total, currentPage) {
+    const totalPages = Math.ceil(total / 20);
+    const pagination = document.getElementById('pagination');
+    
+    let html = '';
+    if (totalPages > 1) {
+        html += `<button class="btn btn-sm" onclick="loadStocks(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>上一页</button>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+            } else {
+                html += `<button class="btn btn-sm" onclick="loadStocks(${i})">${i}</button>`;
+            }
+        }
+        
+        html += `<button class="btn btn-sm" onclick="loadStocks(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>下一页</button>`;
+    }
+    
+    pagination.innerHTML = html;
+}
+
+// 搜索库存
+function searchStocks() {
+    loadStocks(1);
+    loadStockSummary();
+}
+
+// 仓库类型筛选变化时更新仓库列表
+document.getElementById('warehouseTypeFilter').addEventListener('change', function() {
+    const selectedType = this.value;
+    const warehouseSelect = document.getElementById('warehouseFilter');
+    
+    warehouseSelect.innerHTML = '<option value="">全部仓库</option>';
+    
+    warehouses.forEach(warehouse => {
+        if (!selectedType || warehouse.warehouse_type === selectedType) {
+            const option = document.createElement('option');
+            option.value = warehouse.id;
+            option.textContent = warehouse.name;
+            warehouseSelect.appendChild(option);
+        }
+    });
+});
+</script>
+
+<style>
+.low-stock {
+    background-color: #f8d7da;
+    color: #721c24;
+    font-weight: bold;
+}
+</style>
 {% endblock %}
 

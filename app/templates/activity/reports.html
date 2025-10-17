@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}活动上报记录{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">活动上报记录</h3>
+                        <a href="{{ url_for('activity.create_report') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 创建上报
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>参与客户名称</th>
+                                    <th>活动名称</th>
+                                    <th>活动ID</th>
+                                    <th>活动陈列照片</th>
+                                    <th>门店定位照片</th>
+                                    <th>活动兑付照片</th>
+                                    <th>上报状态</th>
+                                    <th>上报人</th>
+                                    <th>上报时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in reports %}
+                                <tr>
+                                    <td>{{ report.customer_name }}</td>
+                                    <td>{{ report.activity_name }}</td>
+                                    <td>{{ report.activity_id }}</td>
+                                    <td>
+                                        {% if report.display_photo %}
+                                        <a href="{{ url_for('static', filename=report.display_photo) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename=report.display_photo) }}" 
+                                                 class="img-thumbnail" style="width: 50px; height: 50px;">
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">无</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if report.location_photo %}
+                                        <a href="{{ url_for('static', filename=report.location_photo) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename=report.location_photo) }}" 
+                                                 class="img-thumbnail" style="width: 50px; height: 50px;">
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">无</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if report.payment_photo %}
+                                        <a href="{{ url_for('static', filename=report.payment_photo) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename=report.payment_photo) }}" 
+                                                 class="img-thumbnail" style="width: 50px; height: 50px;">
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">无</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if report.report_status == 'pending' %}
+                                        <span class="badge badge-warning">待审核</span>
+                                        {% elif report.report_status == 'approved' %}
+                                        <span class="badge badge-success">已通过</span>
+                                        {% elif report.report_status == 'rejected' %}
+                                        <span class="badge badge-danger">已拒绝</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ report.reported_by }}</td>
+                                    <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') if report.created_at else '' }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('activity.edit_report', report_id=report.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> 编辑
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteReport({{ report.id }})">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted">暂无上报记录</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                确定要删除这个上报记录吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteReport(reportId) {
+    $('#deleteForm').attr('action', '{{ url_for("activity.delete_report", report_id=0) }}'.replace('0', reportId));
+    $('#deleteModal').modal('show');
+}
+</script>
+{% endblock %}

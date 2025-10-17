@@ -8,7 +8,730 @@
 </div>
 
 <div class="content-box">
-    <p style="text-align: center; padding: 40px; color: #666;">拜访记录列表将在此显示</p>
+    <!-- 筛选条件 -->
+    <div class="filter-section">
+        <div class="filter-row">
+            <div class="filter-item">
+                <label>拜访人：</label>
+                <select id="visitor-filter">
+                    <option value="">全部</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>客户名称：</label>
+                <input type="text" id="customer-name-filter" placeholder="请输入客户名称">
+            </div>
+            <div class="filter-item">
+                <label>客户类型：</label>
+                <select id="customer-type-filter">
+                    <option value="">全部</option>
+                    <option value="terminal">终端客户</option>
+                    <option value="distributor">直营商客户</option>
+                    <option value="kol">KOL客户</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>开始日期：</label>
+                <input type="date" id="start-date-filter">
+            </div>
+            <div class="filter-item">
+                <label>结束日期：</label>
+                <input type="date" id="end-date-filter">
+            </div>
+            <div class="filter-item">
+                <button class="btn btn-primary" onclick="loadRecords()">查询</button>
+                <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 拜访记录列表 -->
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>客户名称</th>
+                    <th>客户地址</th>
+                    <th>拜访频率</th>
+                    <th>拜访内容</th>
+                    <th>到场签到</th>
+                    <th>离开签到</th>
+                    <th>铺货上报</th>
+                    <th>库存上报</th>
+                    <th>竞品上报</th>
+                    <th>拜访人</th>
+                    <th>记录时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="records-tbody">
+                <!-- 数据将通过JavaScript动态加载 -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination-container">
+        <div class="pagination-info">
+            <span id="pagination-info">显示第 1-20 条，共 0 条记录</span>
+        </div>
+        <div class="pagination" id="pagination">
+            <!-- 分页按钮将通过JavaScript动态生成 -->
+        </div>
+    </div>
 </div>
+
+<!-- 详情模态框 -->
+<div class="modal" id="detailModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>拜访记录详情</h3>
+            <span class="close" onclick="closeDetailModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="detail-content">
+            <!-- 详情内容将通过JavaScript动态填充 -->
+        </div>
+    </div>
+</div>
+
+<style>
+.filter-section {
+    background: #f8f9fa;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: end;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+}
+
+.filter-item label {
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.filter-item input,
+.filter-item select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.pagination button:hover {
+    background: #f8f9fa;
+}
+
+.pagination button.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close {
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.detail-section h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+
+.detail-item {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #666;
+    min-width: 120px;
+}
+
+.detail-value {
+    color: #333;
+    flex: 1;
+}
+
+.photo-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.photo-item {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.photo-item:hover {
+    transform: scale(1.05);
+}
+
+.photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.list-item {
+    background: white;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+</style>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let totalRecords = 0;
+const perPage = 20;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+    loadRecords();
+});
+
+// 加载用户列表
+function loadUsers() {
+    fetch('/visit/api/users/list')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('visitor-filter');
+                data.data.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.name;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('加载用户列表失败:', error);
+        });
+}
+
+// 加载拜访记录列表
+function loadRecords(page = 1) {
+    const visitorId = document.getElementById('visitor-filter').value;
+    const customerName = document.getElementById('customer-name-filter').value;
+    const customerType = document.getElementById('customer-type-filter').value;
+    const startDate = document.getElementById('start-date-filter').value;
+    const endDate = document.getElementById('end-date-filter').value;
+
+    const params = new URLSearchParams({
+        page: page,
+        per_page: perPage
+    });
+
+    if (visitorId) params.append('visitor_id', visitorId);
+    if (customerName) params.append('customer_name', customerName);
+    if (customerType) params.append('customer_type', customerType);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    document.getElementById('records-tbody').innerHTML = '<tr><td colspan="13" class="loading">加载中...</td></tr>';
+
+    fetch(`/visit/api/record/list?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentPage = page;
+                totalRecords = data.total;
+                totalPages = Math.ceil(totalRecords / perPage);
+                renderRecords(data.data);
+                renderPagination();
+                updatePaginationInfo();
+            } else {
+                document.getElementById('records-tbody').innerHTML = '<tr><td colspan="13" class="empty-state">加载失败</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('加载拜访记录失败:', error);
+            document.getElementById('records-tbody').innerHTML = '<tr><td colspan="13" class="empty-state">加载失败</td></tr>';
+        });
+}
+
+// 渲染拜访记录列表
+function renderRecords(records) {
+    const tbody = document.getElementById('records-tbody');
+    
+    if (records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="13" class="empty-state">暂无拜访记录</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = records.map((record, index) => {
+        const rowIndex = (currentPage - 1) * perPage + index + 1;
+        
+        return `
+            <tr>
+                <td>${rowIndex}</td>
+                <td>${record.customer_name || '-'}</td>
+                <td>${record.customer_address || '-'}</td>
+                <td>${record.visit_frequency || '-'}</td>
+                <td>${record.visit_content ? (record.visit_content.length > 50 ? record.visit_content.substring(0, 50) + '...' : record.visit_content) : '-'}</td>
+                <td>${formatCheckinInfo(record.checkin_time, record.checkin_address)}</td>
+                <td>${formatCheckoutInfo(record.checkout_time, record.checkout_address)}</td>
+                <td>${formatReportInfo(record.product_distribution_list, record.distribution_photos)}</td>
+                <td>${formatReportInfo(record.inventory_list, record.inventory_photos)}</td>
+                <td>${formatReportInfo(record.competitor_list, record.competitor_photos)}</td>
+                <td>${record.visitor || '-'}</td>
+                <td>${formatDateTime(record.created_at)}</td>
+                <td>
+                    <button class="btn btn-info" onclick="showDetail(${record.id})">详情</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 格式化签到信息
+function formatCheckinInfo(time, address) {
+    if (!time && !address) return '-';
+    const timeStr = time ? formatDateTime(time) : '';
+    const addressStr = address || '';
+    return `${timeStr}<br><small style="color: #666;">${addressStr}</small>`;
+}
+
+// 格式化签退信息
+function formatCheckoutInfo(time, address) {
+    if (!time && !address) return '-';
+    const timeStr = time ? formatDateTime(time) : '';
+    const addressStr = address || '';
+    return `${timeStr}<br><small style="color: #666;">${addressStr}</small>`;
+}
+
+// 格式化上报信息
+function formatReportInfo(list, photos) {
+    const hasList = list && list.length > 0;
+    const hasPhotos = photos && photos.length > 0;
+    
+    if (!hasList && !hasPhotos) return '-';
+    
+    let info = '';
+    if (hasList) {
+        info += `清单: ${list.length}项`;
+    }
+    if (hasPhotos) {
+        if (info) info += '<br>';
+        info += `照片: ${photos.length}张`;
+    }
+    
+    return info;
+}
+
+// 格式化日期时间
+function formatDateTime(dateTimeStr) {
+    if (!dateTimeStr) return '-';
+    const date = new Date(dateTimeStr);
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// 渲染分页
+function renderPagination() {
+    const pagination = document.getElementById('pagination');
+    let html = '';
+
+    // 上一页按钮
+    html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="loadRecords(${currentPage - 1})">上一页</button>`;
+
+    // 页码按钮
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+        html += `<button onclick="loadRecords(1)">1</button>`;
+        if (startPage > 2) {
+            html += `<span>...</span>`;
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="loadRecords(${i})">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            html += `<span>...</span>`;
+        }
+        html += `<button onclick="loadRecords(${totalPages})">${totalPages}</button>`;
+    }
+
+    // 下一页按钮
+    html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="loadRecords(${currentPage + 1})">下一页</button>`;
+
+    pagination.innerHTML = html;
+}
+
+// 更新分页信息
+function updatePaginationInfo() {
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalRecords);
+    document.getElementById('pagination-info').textContent = `显示第 ${start}-${end} 条，共 ${totalRecords} 条记录`;
+}
+
+// 重置筛选条件
+function resetFilters() {
+    document.getElementById('visitor-filter').value = '';
+    document.getElementById('customer-name-filter').value = '';
+    document.getElementById('customer-type-filter').value = '';
+    document.getElementById('start-date-filter').value = '';
+    document.getElementById('end-date-filter').value = '';
+    loadRecords();
+}
+
+// 显示详情
+function showDetail(recordId) {
+    fetch(`/visit/api/record/${recordId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderDetail(data.data);
+                document.getElementById('detailModal').style.display = 'block';
+            } else {
+                alert('获取详情失败');
+            }
+        })
+        .catch(error => {
+            console.error('获取详情失败:', error);
+            alert('获取详情失败');
+        });
+}
+
+// 渲染详情内容
+function renderDetail(record) {
+    const content = document.getElementById('detail-content');
+    
+    content.innerHTML = `
+        <div class="detail-section">
+            <h4>基本信息</h4>
+            <div class="detail-item">
+                <div class="detail-label">客户名称：</div>
+                <div class="detail-value">${record.customer_name || '-'}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">客户地址：</div>
+                <div class="detail-value">${record.customer_address || '-'}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">拜访频率：</div>
+                <div class="detail-value">${record.visit_frequency || '-'}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">拜访人：</div>
+                <div class="detail-value">${record.visitor || '-'}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">记录时间：</div>
+                <div class="detail-value">${formatDateTime(record.created_at)}</div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4>拜访内容</h4>
+            <div class="detail-value">${record.visit_content || '-'}</div>
+        </div>
+
+        <div class="detail-section">
+            <h4>到场签到</h4>
+            <div class="detail-item">
+                <div class="detail-label">签到时间：</div>
+                <div class="detail-value">${formatDateTime(record.checkin_time)}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">签到地点：</div>
+                <div class="detail-value">${record.checkin_address || '-'}</div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4>离开签到</h4>
+            <div class="detail-item">
+                <div class="detail-label">签退时间：</div>
+                <div class="detail-value">${formatDateTime(record.checkout_time)}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">签退地点：</div>
+                <div class="detail-value">${record.checkout_address || '-'}</div>
+            </div>
+        </div>
+
+        ${renderReportSection('铺货上报', record.product_distribution_list, record.distribution_photos, record.distribution_remark)}
+        ${renderReportSection('库存上报', record.inventory_list, record.inventory_photos, record.inventory_remark)}
+        ${renderReportSection('竞品上报', record.competitor_list, record.competitor_photos, record.competitor_remark)}
+    `;
+}
+
+// 渲染上报信息部分
+function renderReportSection(title, list, photos, remark) {
+    const hasList = list && list.length > 0;
+    const hasPhotos = photos && photos.length > 0;
+    const hasRemark = remark && remark.trim();
+    
+    if (!hasList && !hasPhotos && !hasRemark) {
+        return `
+            <div class="detail-section">
+                <h4>${title}</h4>
+                <div class="detail-value">-</div>
+            </div>
+        `;
+    }
+    
+    let content = `
+        <div class="detail-section">
+            <h4>${title}</h4>
+    `;
+    
+    if (hasList) {
+        content += `
+            <div class="detail-item">
+                <div class="detail-label">清单：</div>
+                <div class="detail-value">
+                    ${list.map(item => `<div class="list-item">${typeof item === 'string' ? item : JSON.stringify(item)}</div>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (hasPhotos) {
+        content += `
+            <div class="detail-item">
+                <div class="detail-label">现场照片：</div>
+                <div class="detail-value">
+                    <div class="photo-gallery">
+                        ${photos.map(photo => `<div class="photo-item"><img src="${photo}" alt="现场照片" onclick="openPhoto('${photo}')"></div>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (hasRemark) {
+        content += `
+            <div class="detail-item">
+                <div class="detail-label">备注：</div>
+                <div class="detail-value">${remark}</div>
+            </div>
+        `;
+    }
+    
+    content += '</div>';
+    return content;
+}
+
+// 关闭详情模态框
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+// 打开照片
+function openPhoto(photoUrl) {
+    window.open(photoUrl, '_blank');
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const modal = document.getElementById('detailModal');
+    if (event.target === modal) {
+        closeDetailModal();
+    }
+}
+</script>
 {% endblock %}
 

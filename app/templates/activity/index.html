@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}活动管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">活动管理</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="card-title">活动中心</h4>
+                                            <p class="card-text">管理活动信息，创建和编辑活动</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-calendar-alt fa-3x"></i>
+                                        </div>
+                                    </div>
+                                    <a href="{{ url_for('activity.center') }}" class="btn btn-light">
+                                        <i class="fas fa-arrow-right"></i> 进入活动中心
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="card-title">活动上报记录</h4>
+                                            <p class="card-text">查看和管理客户经理的活动上报</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-clipboard-list fa-3x"></i>
+                                        </div>
+                                    </div>
+                                    <a href="{{ url_for('activity.reports') }}" class="btn btn-light">
+                                        <i class="fas fa-arrow-right"></i> 查看上报记录
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}编辑活动上报{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">编辑活动上报</h3>
+                        <a href="{{ url_for('activity.reports') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 返回上报记录
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="customer_name">参与客户名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" 
+                                   value="{{ report.customer_name }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_type">客户类型</label>
+                            <select class="form-control" id="customer_type" name="customer_type">
+                                <option value="">请选择客户类型</option>
+                                <option value="terminal" {% if report.customer_type == 'terminal' %}selected{% endif %}>终端客户</option>
+                                <option value="distributor" {% if report.customer_type == 'distributor' %}selected{% endif %}>直营商</option>
+                                <option value="kol" {% if report.customer_type == 'kol' %}selected{% endif %}>KOL</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_id">客户ID</label>
+                            <input type="text" class="form-control" id="customer_id" name="customer_id" 
+                                   value="{{ report.customer_id or '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="report_status">上报状态</label>
+                            <select class="form-control" id="report_status" name="report_status">
+                                <option value="pending" {% if report.report_status == 'pending' %}selected{% endif %}>待审核</option>
+                                <option value="approved" {% if report.report_status == 'approved' %}selected{% endif %}>已通过</option>
+                                <option value="rejected" {% if report.report_status == 'rejected' %}selected{% endif %}>已拒绝</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>当前活动陈列照片</label>
+                            {% if report.display_photo %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename=report.display_photo) }}" 
+                                     class="img-thumbnail" style="width: 100px; height: 100px;">
+                                <a href="{{ url_for('static', filename=report.display_photo) }}" target="_blank" class="ml-2">查看原图</a>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">暂无照片</p>
+                            {% endif %}
+                            <label for="display_photo">更新活动陈列照片</label>
+                            <input type="file" class="form-control-file" id="display_photo" name="display_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式，留空则不更新</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>当前门店定位照片</label>
+                            {% if report.location_photo %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename=report.location_photo) }}" 
+                                     class="img-thumbnail" style="width: 100px; height: 100px;">
+                                <a href="{{ url_for('static', filename=report.location_photo) }}" target="_blank" class="ml-2">查看原图</a>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">暂无照片</p>
+                            {% endif %}
+                            <label for="location_photo">更新门店定位照片</label>
+                            <input type="file" class="form-control-file" id="location_photo" name="location_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式，留空则不更新</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>当前活动兑付照片</label>
+                            {% if report.payment_photo %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename=report.payment_photo) }}" 
+                                     class="img-thumbnail" style="width: 100px; height: 100px;">
+                                <a href="{{ url_for('static', filename=report.payment_photo) }}" target="_blank" class="ml-2">查看原图</a>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">暂无照片</p>
+                            {% endif %}
+                            <label for="payment_photo">更新活动兑付照片</label>
+                            <input type="file" class="form-control-file" id="payment_photo" name="payment_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式，留空则不更新</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="remark">备注</label>
+                            <textarea class="form-control" id="remark" name="remark" rows="3" 
+                                      placeholder="请输入备注信息...">{{ report.remark or '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 更新上报
+                            </button>
+                            <a href="{{ url_for('activity.reports') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> 取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

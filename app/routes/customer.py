@@ -28,7 +28,11 @@ def get_terminal_list():
         query = query.filter(
             (Terminal.name.like(f'%{search}%')) |
             (Terminal.code.like(f'%{search}%')) |
-            (Terminal.phone.like(f'%{search}%'))
+            (Terminal.phone.like(f'%{search}%')) |
+            (Terminal.contact_phone.like(f'%{search}%')) |
+            (Terminal.receiver_phone.like(f'%{search}%')) |
+            (Terminal.license_name.like(f'%{search}%')) |
+            (Terminal.registration_no.like(f'%{search}%'))
         )
     
     if status:
@@ -50,18 +54,49 @@ def get_terminal_list():
 @login_required
 def create_terminal():
     """创建终端客户"""
-    data = request.get_json()
+    # 处理文件上传
+    business_license_path = None
+    if 'business_license' in request.files:
+        file = request.files['business_license']
+        if file and file.filename:
+            # 保存文件到uploads目录
+            import os
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            filename = f"license_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+            file_path = os.path.join(upload_dir, filename)
+            file.save(file_path)
+            business_license_path = f"uploads/{filename}"
+    
+    # 获取表单数据
+    data = request.form.to_dict()
     
     terminal = Terminal(
-        code=data.get('code'),
         name=data.get('name'),
+        code=data.get('code'),
         type=data.get('type'),
         level=data.get('level'),
-        visit_frequency=data.get('visit_frequency'),
-        manager_id=data.get('manager_id'),
-        phone=data.get('phone'),
-        address=data.get('address'),
+        manager_id=data.get('manager_id') if data.get('manager_id') else None,
+        assistant_id=data.get('assistant_id') if data.get('assistant_id') else None,
+        sales_area=data.get('sales_area'),
+        tags=data.get('tags'),
+        supplier=data.get('supplier'),
         cooperation_status=data.get('cooperation_status', '合作中'),
+        phone=data.get('phone'),
+        remark=data.get('remark'),
+        visit_frequency=data.get('visit_frequency'),
+        approval_status=data.get('approval_status', 'pending'),
+        business_license=business_license_path,
+        license_name=data.get('license_name'),
+        registration_no=data.get('registration_no'),
+        registration_date=datetime.strptime(data.get('registration_date'), '%Y-%m-%d').date() if data.get('registration_date') else None,
+        operator=data.get('operator'),
+        receiver_name=data.get('receiver_name'),
+        receiver_phone=data.get('receiver_phone'),
+        receiver_address=data.get('receiver_address'),
+        detail_address=data.get('detail_address'),
+        contact_name=data.get('contact_name'),
+        contact_phone=data.get('contact_phone'),
         created_by=current_user.id
     )
     
@@ -120,7 +155,12 @@ def get_distributor_list():
     if search:
         query = query.filter(
             (DirectDistributor.name.like(f'%{search}%')) |
-            (DirectDistributor.code.like(f'%{search}%'))
+            (DirectDistributor.code.like(f'%{search}%')) |
+            (DirectDistributor.phone.like(f'%{search}%')) |
+            (DirectDistributor.contact_phone.like(f'%{search}%')) |
+            (DirectDistributor.receiver_phone.like(f'%{search}%')) |
+            (DirectDistributor.license_name.like(f'%{search}%')) |
+            (DirectDistributor.registration_no.like(f'%{search}%'))
         )
     
     pagination = query.order_by(DirectDistributor.created_at.desc()).paginate(
@@ -137,16 +177,49 @@ def get_distributor_list():
 @login_required
 def create_distributor():
     """创建直营商"""
-    data = request.get_json()
+    # 处理文件上传
+    business_license_path = None
+    if 'business_license' in request.files:
+        file = request.files['business_license']
+        if file and file.filename:
+            # 保存文件到uploads目录
+            import os
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            filename = f"license_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+            file_path = os.path.join(upload_dir, filename)
+            file.save(file_path)
+            business_license_path = f"uploads/{filename}"
+    
+    # 获取表单数据
+    data = request.form.to_dict()
     
     distributor = DirectDistributor(
-        code=data.get('code'),
         name=data.get('name'),
+        code=data.get('code'),
         type=data.get('type'),
         level=data.get('level'),
-        manager_id=data.get('manager_id'),
+        manager_id=data.get('manager_id') if data.get('manager_id') else None,
+        assistant_id=data.get('assistant_id') if data.get('assistant_id') else None,
+        sales_area=data.get('sales_area'),
+        tags=data.get('tags'),
+        supplier=data.get('supplier'),
+        cooperation_status=data.get('cooperation_status', '合作中'),
         phone=data.get('phone'),
-        address=data.get('address'),
+        remark=data.get('remark'),
+        visit_frequency=data.get('visit_frequency'),
+        approval_status=data.get('approval_status', 'pending'),
+        business_license=business_license_path,
+        license_name=data.get('license_name'),
+        registration_no=data.get('registration_no'),
+        registration_date=datetime.strptime(data.get('registration_date'), '%Y-%m-%d').date() if data.get('registration_date') else None,
+        operator=data.get('operator'),
+        receiver_name=data.get('receiver_name'),
+        receiver_phone=data.get('receiver_phone'),
+        receiver_address=data.get('receiver_address'),
+        detail_address=data.get('detail_address'),
+        contact_name=data.get('contact_name'),
+        contact_phone=data.get('contact_phone'),
         created_by=current_user.id
     )
     
@@ -175,7 +248,11 @@ def get_kol_list():
     if search:
         query = query.filter(
             (KOL.name.like(f'%{search}%')) |
-            (KOL.code.like(f'%{search}%'))
+            (KOL.code.like(f'%{search}%')) |
+            (KOL.phone.like(f'%{search}%')) |
+            (KOL.profession.like(f'%{search}%')) |
+            (KOL.location.like(f'%{search}%')) |
+            (KOL.kol_tags.like(f'%{search}%'))
         )
     
     pagination = query.order_by(KOL.created_at.desc()).paginate(
@@ -197,10 +274,26 @@ def create_kol():
     kol = KOL(
         code=data.get('code'),
         name=data.get('name'),
+        consumer_type=data.get('consumer_type'),
+        gender=data.get('gender'),
         phone=data.get('phone'),
-        company=data.get('company'),
+        age_group=data.get('age_group'),
+        kol_tags=data.get('kol_tags'),
+        birthday=datetime.strptime(data.get('birthday'), '%Y-%m-%d').date() if data.get('birthday') else None,
+        location=data.get('location'),
         profession=data.get('profession'),
+        drinking_frequency=data.get('drinking_frequency'),
+        drinking_scene=data.get('drinking_scene'),
+        cooperation_status=data.get('cooperation_status', '合作中'),
         manager_id=data.get('manager_id'),
+        position_note=data.get('position_note'),
+        province=data.get('province'),
+        city=data.get('city'),
+        district=data.get('district'),
+        detail_address=data.get('detail_address'),
+        receiver_name=data.get('receiver_name'),
+        receiver_phone=data.get('receiver_phone'),
+        receiver_address=data.get('receiver_address'),
         created_by=current_user.id
     )
     

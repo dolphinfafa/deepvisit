@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}逾期拜访列表{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-exclamation-triangle text-warning"></i> 逾期拜访列表
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-info" onclick="loadOverdueList()">
+                            <i class="fas fa-sync"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 统计信息 -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">逾期客户总数</span>
+                                    <span class="info-box-number" id="totalOverdue">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning"><i class="fas fa-clock"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">严重逾期(>30天)</span>
+                                    <span class="info-box-number" id="severeOverdue">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info"><i class="fas fa-users"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">涉及客户经理</span>
+                                    <span class="info-box-number" id="managerCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success"><i class="fas fa-calendar-check"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">平均逾期天数</span>
+                                    <span class="info-box-number" id="avgOverdue">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 筛选条件 -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <select class="form-control" id="managerFilter">
+                                <option value="">全部客户经理</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" id="customerTypeFilter">
+                                <option value="">全部客户类型</option>
+                                <option value="terminal">终端客户</option>
+                                <option value="distributor">直营商客户</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" id="overdueLevelFilter">
+                                <option value="">全部逾期等级</option>
+                                <option value="1-7">1-7天</option>
+                                <option value="8-30">8-30天</option>
+                                <option value="31-90">31-90天</option>
+                                <option value="90+">90天以上</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" id="customerNameFilter" placeholder="客户名称">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info" onclick="loadOverdueList()">
+                                <i class="fas fa-search"></i> 查询
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                <i class="fas fa-undo"></i> 重置
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 数据表格 -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="overdueTable">
+                            <thead>
+                                <tr>
+                                    <th>客户名称</th>
+                                    <th>客户编码</th>
+                                    <th>客户地址</th>
+                                    <th>客户经理</th>
+                                    <th>拜访频率</th>
+                                    <th>逾期天数</th>
+                                    <th>最后拜访</th>
+                                    <th>客户类型</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overdueTableBody">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="row">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" id="overdueTable_info" role="status" aria-live="polite">
+                                显示第 1 到 20 条，共 0 条记录
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers" id="overdueTable_paginate">
+                                <ul class="pagination" id="pagination">
+                                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 客户详情模态框 -->
+<div class="modal fade" id="customerDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">客户详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="customerDetailContent">
+                <!-- 客户详情内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="createVisitPlan()">
+                    <i class="fas fa-plus"></i> 创建拜访计划
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.info-box {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    margin-bottom: 10px;
+}
+
+.info-box-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    color: white;
+    font-size: 20px;
+}
+
+.info-box-content {
+    margin-left: 15px;
+    flex: 1;
+}
+
+.info-box-text {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.info-box-number {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.overdue-badge {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.overdue-severe {
+    background-color: #dc3545;
+    color: white;
+}
+
+.overdue-moderate {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.overdue-mild {
+    background-color: #ffc107;
+    color: #212529;
+}
+</style>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let allOverdueData = [];
+
+$(document).ready(function() {
+    loadUsers();
+    loadOverdueList();
+});
+
+// 加载用户列表
+function loadUsers() {
+    $.get('/visit/api/users/list', function(response) {
+        if (response.success) {
+            const managerFilter = $('#managerFilter');
+            response.data.forEach(user => {
+                managerFilter.append(`<option value="${user.name}">${user.name}</option>`);
+            });
+        }
+    });
+}
+
+// 加载逾期拜访列表
+function loadOverdueList(page = 1) {
+    $.get('/visit/api/overdue/list', function(response) {
+        if (response.success) {
+            allOverdueData = response.data;
+            const filteredData = filterOverdueData(allOverdueData);
+            renderOverdueTable(filteredData);
+            updateStatistics(filteredData);
+            currentPage = page;
+        } else {
+            showAlert('加载数据失败', 'error');
+        }
+    });
+}
+
+// 筛选逾期数据
+function filterOverdueData(data) {
+    let filtered = [...data];
+    
+    const manager = $('#managerFilter').val();
+    const customerType = $('#customerTypeFilter').val();
+    const overdueLevel = $('#overdueLevelFilter').val();
+    const customerName = $('#customerNameFilter').val().toLowerCase();
+    
+    if (manager) {
+        filtered = filtered.filter(item => item.manager === manager);
+    }
+    
+    if (customerType) {
+        filtered = filtered.filter(item => item.customer_type === customerType);
+    }
+    
+    if (overdueLevel) {
+        filtered = filtered.filter(item => {
+            const days = item.overdue_days;
+            switch (overdueLevel) {
+                case '1-7': return days >= 1 && days <= 7;
+                case '8-30': return days >= 8 && days <= 30;
+                case '31-90': return days >= 31 && days <= 90;
+                case '90+': return days > 90;
+                default: return true;
+            }
+        });
+    }
+    
+    if (customerName) {
+        filtered = filtered.filter(item => 
+            item.customer_name.toLowerCase().includes(customerName)
+        );
+    }
+    
+    return filtered;
+}
+
+// 渲染表格数据
+function renderOverdueTable(data) {
+    const tbody = $('#overdueTableBody');
+    tbody.empty();
+    
+    if (data.length === 0) {
+        tbody.append('<tr><td colspan="9" class="text-center">暂无逾期客户</td></tr>');
+        return;
+    }
+    
+    data.forEach(customer => {
+        const overdueBadge = getOverdueBadge(customer.overdue_days);
+        
+        tbody.append(`
+            <tr>
+                <td>${customer.customer_name}</td>
+                <td>${customer.customer_code}</td>
+                <td>${customer.customer_address}</td>
+                <td>${customer.manager}</td>
+                <td>${customer.visit_frequency}</td>
+                <td>${overdueBadge}</td>
+                <td>${customer.last_visit_date}</td>
+                <td><span class="badge badge-info">${customer.customer_type_name}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewCustomerDetail('${customer.customer_type}', ${customer.customer_id})">
+                        <i class="fas fa-eye"></i> 详情
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="createVisitPlan('${customer.customer_type}', ${customer.customer_id}, '${customer.customer_name}')">
+                        <i class="fas fa-plus"></i> 拜访
+                    </button>
+                </td>
+            </tr>
+        `);
+    });
+}
+
+// 获取逾期标签
+function getOverdueBadge(days) {
+    let badgeClass = 'overdue-mild';
+    if (days > 90) {
+        badgeClass = 'overdue-severe';
+    } else if (days > 30) {
+        badgeClass = 'overdue-moderate';
+    }
+    
+    return `<span class="badge overdue-badge ${badgeClass}">${days}天</span>`;
+}
+
+// 更新统计信息
+function updateStatistics(data) {
+    $('#totalOverdue').text(data.length);
+    
+    const severeCount = data.filter(item => item.overdue_days > 30).length;
+    $('#severeOverdue').text(severeCount);
+    
+    const managers = new Set(data.map(item => item.manager));
+    $('#managerCount').text(managers.size);
+    
+    if (data.length > 0) {
+        const avgDays = Math.round(data.reduce((sum, item) => sum + item.overdue_days, 0) / data.length);
+        $('#avgOverdue').text(avgDays + '天');
+    } else {
+        $('#avgOverdue').text('0天');
+    }
+}
+
+// 查看客户详情
+function viewCustomerDetail(customerType, customerId) {
+    // 这里可以添加获取客户详情的API调用
+    $('#customerDetailModal').modal('show');
+    
+    // 模拟客户详情数据
+    const customerDetailHtml = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>基本信息</h6>
+                <p><strong>客户类型：</strong>${customerType === 'terminal' ? '终端客户' : '直营商客户'}</p>
+                <p><strong>客户ID：</strong>${customerId}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>拜访信息</h6>
+                <p><strong>拜访频率：</strong>根据客户设置</p>
+                <p><strong>最后拜访：</strong>需要查询拜访记录</p>
+            </div>
+        </div>
+    `;
+    
+    $('#customerDetailContent').html(customerDetailHtml);
+}
+
+// 创建拜访计划
+function createVisitPlan(customerType, customerId, customerName) {
+    if (customerType && customerId && customerName) {
+        // 跳转到拜访计划页面，并预填客户信息
+        const url = `/visit/plan?customer_type=${customerType}&customer_id=${customerId}&customer_name=${encodeURIComponent(customerName)}`;
+        window.open(url, '_blank');
+    } else {
+        showAlert('请先选择客户', 'warning');
+    }
+}
+
+// 重置筛选条件
+function resetFilters() {
+    $('#managerFilter').val('');
+    $('#customerTypeFilter').val('');
+    $('#overdueLevelFilter').val('');
+    $('#customerNameFilter').val('');
+    loadOverdueList();
+}
+
+// 显示提示信息
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    
+    $('.container-fluid').prepend(alertHtml);
+    
+    // 3秒后自动消失
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 3000);
+}
+</script>
+{% endblock %}

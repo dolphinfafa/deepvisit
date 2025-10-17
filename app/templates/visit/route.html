@@ -3,13 +3,598 @@
 {% block title %}拜访路线管理{% endblock %}
 
 {% block content %}
-<div class="header">
-    <h2>拜访路线管理</h2>
-    <button class="btn btn-primary" onclick="alert('功能开发中')">+ 新建路线</button>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">拜访路线管理</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addRouteModal">
+                            <i class="fas fa-plus"></i> 新增拜访路线
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 筛选条件 -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <select class="form-control" id="visitorFilter">
+                                <option value="">全部客户经理</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" id="approvalStatusFilter">
+                                <option value="">全部审批状态</option>
+                                <option value="pending">待审批</option>
+                                <option value="approved">已审批</option>
+                                <option value="rejected">已拒绝</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" id="nameFilter" placeholder="路线名称">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" class="form-control" id="startDateFilter" placeholder="开始日期">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" class="form-control" id="endDateFilter" placeholder="结束日期">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info" onclick="loadRouteList()">
+                                <i class="fas fa-search"></i> 查询
+                            </button>
+                            <button type="button" class="btn btn-secondary ml-1" onclick="resetFilters()">
+                                <i class="fas fa-undo"></i> 重置
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 数据表格 -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="routeTable">
+                            <thead>
+                                <tr>
+                                    <th>路线名称</th>
+                                    <th>客户经理</th>
+                                    <th>客户数量</th>
+                                    <th>路线详情</th>
+                                    <th>审批状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="routeTableBody">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="row">
+                        <div class="col-sm-12 col-md-5">
+                            <div class="dataTables_info" id="routeTable_info" role="status" aria-live="polite">
+                                显示第 1 到 20 条，共 0 条记录
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-7">
+                            <div class="dataTables_paginate paging_simple_numbers" id="routeTable_paginate">
+                                <ul class="pagination" id="pagination">
+                                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="content-box">
-    <p style="text-align: center; padding: 40px; color: #666;">拜访路线列表将在此显示</p>
+<!-- 新增拜访路线模态框 -->
+<div class="modal fade" id="addRouteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新增拜访路线</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="addRouteForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="routeName">路线名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="routeName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="visitorSelect">客户经理 <span class="text-danger">*</span></label>
+                                <select class="form-control" id="visitorSelect" name="visitor_id" required>
+                                    <option value="">请选择客户经理</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>选择客户 <span class="text-danger">*</span></label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>客户类型筛选</label>
+                                    <select class="form-control" id="customerTypeFilter" onchange="filterCustomers()">
+                                        <option value="">全部类型</option>
+                                        <option value="terminal">终端客户</option>
+                                        <option value="distributor">直营商客户</option>
+                                        <option value="kol">KOL客户</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>客户名称搜索</label>
+                                    <input type="text" class="form-control" id="customerSearch" placeholder="输入客户名称" onkeyup="filterCustomers()">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 客户选择区域 -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>可选客户</h6>
+                                <div class="border" style="height: 300px; overflow-y: auto;">
+                                    <div id="availableCustomers">
+                                        <!-- 客户列表将通过JavaScript动态加载 -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>已选客户</h6>
+                                <div class="border" style="height: 300px; overflow-y: auto;">
+                                    <div id="selectedCustomers">
+                                        <!-- 已选客户列表 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-success" onclick="addSelectedCustomers()">
+                                <i class="fas fa-arrow-right"></i> 添加到路线
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="removeSelectedCustomers()">
+                                <i class="fas fa-arrow-left"></i> 从路线移除
+                            </button>
+                            <button type="button" class="btn btn-sm btn-info" onclick="optimizeRoute()">
+                                <i class="fas fa-route"></i> 优化路线
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="routeRemark">备注</label>
+                        <textarea class="form-control" id="routeRemark" name="remark" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<!-- 路线详情模态框 -->
+<div class="modal fade" id="routeDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">路线详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="routeDetailContent">
+                <!-- 路线详情内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                <div id="approvalButtons" style="display: none;">
+                    <button type="button" class="btn btn-success" onclick="approveRoute('approve')">
+                        <i class="fas fa-check"></i> 审批通过
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="approveRoute('reject')">
+                        <i class="fas fa-times"></i> 审批拒绝
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let allCustomers = [];
+let filteredCustomers = [];
+let selectedCustomers = [];
+let currentRouteId = null;
+
+$(document).ready(function() {
+    loadUsers();
+    loadCustomers();
+    loadRouteList();
+    
+    // 新增拜访路线表单提交
+    $('#addRouteForm').on('submit', function(e) {
+        e.preventDefault();
+        createRoute();
+    });
+});
+
+// 加载用户列表
+function loadUsers() {
+    $.get('/visit/api/users/list', function(response) {
+        if (response.success) {
+            const visitorSelect = $('#visitorSelect');
+            const visitorFilter = $('#visitorFilter');
+            
+            response.data.forEach(user => {
+                visitorSelect.append(`<option value="${user.id}">${user.name} (${user.department || '无部门'})</option>`);
+                visitorFilter.append(`<option value="${user.id}">${user.name}</option>`);
+            });
+        }
+    });
+}
+
+// 加载客户列表
+function loadCustomers() {
+    $.get('/visit/api/customers/list', function(response) {
+        if (response.success) {
+            allCustomers = response.data;
+            filteredCustomers = [...allCustomers];
+            renderAvailableCustomers();
+        }
+    });
+}
+
+// 筛选客户
+function filterCustomers() {
+    const typeFilter = $('#customerTypeFilter').val();
+    const searchText = $('#customerSearch').val().toLowerCase();
+    
+    filteredCustomers = allCustomers.filter(customer => {
+        const typeMatch = !typeFilter || customer.type === typeFilter;
+        const nameMatch = !searchText || customer.name.toLowerCase().includes(searchText);
+        return typeMatch && nameMatch;
+    });
+    
+    renderAvailableCustomers();
+}
+
+// 渲染可选客户
+function renderAvailableCustomers() {
+    const container = $('#availableCustomers');
+    container.empty();
+    
+    filteredCustomers.forEach(customer => {
+        const isSelected = selectedCustomers.some(selected => selected.id === customer.id);
+        if (!isSelected) {
+            container.append(`
+                <div class="form-check p-2 border-bottom">
+                    <input class="form-check-input" type="checkbox" value="${customer.id}" id="customer_${customer.id}">
+                    <label class="form-check-label" for="customer_${customer.id}">
+                        <strong>${customer.name}</strong> (${customer.type_name})
+                        <br><small class="text-muted">${customer.address || '无地址'} | ${customer.phone || '无电话'}</small>
+                    </label>
+                </div>
+            `);
+        }
+    });
+}
+
+// 添加选中的客户到路线
+function addSelectedCustomers() {
+    const checkedBoxes = $('#availableCustomers input[type="checkbox"]:checked');
+    checkedBoxes.each(function() {
+        const customerId = parseInt($(this).val());
+        const customer = allCustomers.find(c => c.id === customerId);
+        if (customer && !selectedCustomers.some(s => s.id === customerId)) {
+            selectedCustomers.push(customer);
+        }
+    });
+    
+    renderSelectedCustomers();
+    renderAvailableCustomers();
+}
+
+// 从路线中移除客户
+function removeSelectedCustomers() {
+    const checkedBoxes = $('#selectedCustomers input[type="checkbox"]:checked');
+    const idsToRemove = [];
+    checkedBoxes.each(function() {
+        idsToRemove.push(parseInt($(this).val()));
+    });
+    
+    selectedCustomers = selectedCustomers.filter(customer => !idsToRemove.includes(customer.id));
+    renderSelectedCustomers();
+    renderAvailableCustomers();
+}
+
+// 渲染已选客户
+function renderSelectedCustomers() {
+    const container = $('#selectedCustomers');
+    container.empty();
+    
+    selectedCustomers.forEach((customer, index) => {
+        container.append(`
+            <div class="form-check p-2 border-bottom">
+                <input class="form-check-input" type="checkbox" value="${customer.id}" id="selected_${customer.id}">
+                <label class="form-check-label" for="selected_${customer.id}">
+                    <span class="badge badge-primary">${index + 1}</span>
+                    <strong>${customer.name}</strong> (${customer.type_name})
+                    <br><small class="text-muted">${customer.address || '无地址'} | ${customer.phone || '无电话'}</small>
+                </label>
+            </div>
+        `);
+    });
+}
+
+// 优化路线
+function optimizeRoute() {
+    if (selectedCustomers.length < 2) {
+        showAlert('至少需要选择2个客户才能优化路线', 'warning');
+        return;
+    }
+    
+    // 简单的路线优化：按地址排序（实际应用中可以使用地图API）
+    selectedCustomers.sort((a, b) => {
+        if (a.address && b.address) {
+            return a.address.localeCompare(b.address);
+        }
+        return 0;
+    });
+    
+    renderSelectedCustomers();
+    showAlert('路线已优化', 'success');
+}
+
+// 加载拜访路线列表
+function loadRouteList(page = 1) {
+    const params = {
+        page: page,
+        per_page: 20,
+        visitor_id: $('#visitorFilter').val(),
+        approval_status: $('#approvalStatusFilter').val(),
+        name: $('#nameFilter').val(),
+        start_date: $('#startDateFilter').val(),
+        end_date: $('#endDateFilter').val()
+    };
+    
+    $.get('/visit/api/route/list', params, function(response) {
+        if (response.success) {
+            renderRouteTable(response.data);
+            updatePagination(response.total, page);
+            currentPage = page;
+        } else {
+            showAlert('加载数据失败', 'error');
+        }
+    });
+}
+
+// 渲染表格数据
+function renderRouteTable(data) {
+    const tbody = $('#routeTableBody');
+    tbody.empty();
+    
+    if (data.length === 0) {
+        tbody.append('<tr><td colspan="7" class="text-center">暂无数据</td></tr>');
+        return;
+    }
+    
+    data.forEach(route => {
+        const approvalStatusBadge = getApprovalStatusBadge(route.approval_status);
+        const customerCount = route.customer_list ? route.customer_list.length : 0;
+        const createdDate = route.created_at ? new Date(route.created_at).toLocaleDateString() : '-';
+        
+        tbody.append(`
+            <tr>
+                <td>${route.name}</td>
+                <td>${route.visitor || '-'}</td>
+                <td><span class="badge badge-info">${customerCount}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewRouteDetail(${route.id})">
+                        <i class="fas fa-eye"></i> 查看详情
+                    </button>
+                </td>
+                <td>${approvalStatusBadge}</td>
+                <td>${createdDate}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewRouteDetail(${route.id})">
+                        <i class="fas fa-eye"></i> 查看
+                    </button>
+                    ${route.approval_status === 'pending' ? `
+                        <button class="btn btn-sm btn-success" onclick="approveRoute(${route.id}, 'approve')">
+                            <i class="fas fa-check"></i> 审批
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `);
+    });
+}
+
+// 获取审批状态标签
+function getApprovalStatusBadge(status) {
+    const statusMap = {
+        'pending': '<span class="badge badge-warning">待审批</span>',
+        'approved': '<span class="badge badge-success">已审批</span>',
+        'rejected': '<span class="badge badge-danger">已拒绝</span>'
+    };
+    return statusMap[status] || '<span class="badge badge-secondary">未知</span>';
+}
+
+// 更新分页
+function updatePagination(total, currentPage) {
+    const perPage = 20;
+    totalPages = Math.ceil(total / perPage);
+    
+    const pagination = $('#pagination');
+    pagination.empty();
+    
+    // 上一页
+    if (currentPage > 1) {
+        pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="loadRouteList(${currentPage - 1})">上一页</a></li>`);
+    }
+    
+    // 页码
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const activeClass = i === currentPage ? 'active' : '';
+        pagination.append(`<li class="page-item ${activeClass}"><a class="page-link" href="#" onclick="loadRouteList(${i})">${i}</a></li>`);
+    }
+    
+    // 下一页
+    if (currentPage < totalPages) {
+        pagination.append(`<li class="page-item"><a class="page-link" href="#" onclick="loadRouteList(${currentPage + 1})">下一页</a></li>`);
+    }
+    
+    // 更新信息
+    const start = (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, total);
+    $('#routeTable_info').text(`显示第 ${start} 到 ${end} 条，共 ${total} 条记录`);
+}
+
+// 创建拜访路线
+function createRoute() {
+    if (selectedCustomers.length === 0) {
+        showAlert('请至少选择一个客户', 'warning');
+        return;
+    }
+    
+    const formData = {
+        name: $('#routeName').val(),
+        visitor_id: $('#visitorSelect').val(),
+        customer_list: selectedCustomers,
+        route_details: {
+            total_customers: selectedCustomers.length,
+            estimated_distance: '待计算',
+            estimated_time: '待计算'
+        },
+        remark: $('#routeRemark').val()
+    };
+    
+    $.ajax({
+        url: '/visit/api/route/create',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function(response) {
+            if (response.success) {
+                showAlert('创建成功', 'success');
+                $('#addRouteModal').modal('hide');
+                $('#addRouteForm')[0].reset();
+                selectedCustomers = [];
+                renderSelectedCustomers();
+                loadRouteList(currentPage);
+            } else {
+                showAlert(response.message || '创建失败', 'error');
+            }
+        },
+        error: function() {
+            showAlert('创建失败', 'error');
+        }
+    });
+}
+
+// 查看路线详情
+function viewRouteDetail(routeId) {
+    currentRouteId = routeId;
+    
+    // 这里可以添加获取路线详情的API调用
+    $('#routeDetailModal').modal('show');
+    
+    // 显示审批按钮（如果是待审批状态）
+    const route = getRouteById(routeId);
+    if (route && route.approval_status === 'pending') {
+        $('#approvalButtons').show();
+    } else {
+        $('#approvalButtons').hide();
+    }
+}
+
+// 审批路线
+function approveRoute(routeId, action) {
+    if (typeof routeId === 'string') {
+        // 从模态框调用
+        routeId = currentRouteId;
+        action = routeId;
+    }
+    
+    $.ajax({
+        url: `/visit/api/route/${routeId}/approve`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ action: action }),
+        success: function(response) {
+            if (response.success) {
+                showAlert(response.message, 'success');
+                $('#routeDetailModal').modal('hide');
+                loadRouteList(currentPage);
+            } else {
+                showAlert(response.message || '操作失败', 'error');
+            }
+        },
+        error: function() {
+            showAlert('操作失败', 'error');
+        }
+    });
+}
+
+// 重置筛选条件
+function resetFilters() {
+    $('#visitorFilter').val('');
+    $('#approvalStatusFilter').val('');
+    $('#nameFilter').val('');
+    $('#startDateFilter').val('');
+    $('#endDateFilter').val('');
+    loadRouteList(1);
+}
+
+// 获取路线信息（模拟函数）
+function getRouteById(routeId) {
+    // 这里应该从API获取路线详情
+    return null;
+}
+
+// 显示提示信息
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    
+    $('.container-fluid').prepend(alertHtml);
+    
+    // 3秒后自动消失
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 3000);
+}
+</script>
 {% endblock %}
-

@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}仓库管理{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>仓库管理</h2>
+    <button class="btn btn-primary" onclick="showCreateWarehouseModal()">+ 新增仓库</button>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <select id="warehouseTypeFilter">
+            <option value="">全部类型</option>
+            <option value="qiguang">启光仓库</option>
+            <option value="direct_sales">直营商仓库</option>
+        </select>
+        <button class="btn btn-success" onclick="searchWarehouses()">查询</button>
+    </div>
+    
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>仓库编码</th>
+                    <th>仓库名称</th>
+                    <th>仓库类型</th>
+                    <th>地址</th>
+                    <th>管理员</th>
+                    <th>联系电话</th>
+                    <th>容量</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="warehouseTableBody">
+                <!-- 数据将通过JavaScript加载 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination" id="pagination">
+        <!-- 分页将通过JavaScript生成 -->
+    </div>
+</div>
+
+<!-- 新增/编辑仓库模态框 -->
+<div class="modal" id="warehouseModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">新增仓库</h3>
+            <span class="close" onclick="closeWarehouseModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="warehouseForm">
+                <div class="form-group">
+                    <label>仓库编码 *</label>
+                    <input type="text" id="warehouseCode" name="code" required>
+                </div>
+                <div class="form-group">
+                    <label>仓库名称 *</label>
+                    <input type="text" id="warehouseName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>仓库类型 *</label>
+                    <select id="warehouseType" name="warehouse_type" required>
+                        <option value="">请选择</option>
+                        <option value="qiguang">启光仓库</option>
+                        <option value="direct_sales">直营商仓库</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>地址</label>
+                    <textarea id="address" name="address" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>管理员</label>
+                    <input type="text" id="manager" name="manager">
+                </div>
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="text" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>容量</label>
+                    <input type="number" id="capacity" name="capacity" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea id="description" name="description" rows="3"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeWarehouseModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveWarehouse()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let currentWarehouseId = null;
+
+// 页面加载时获取仓库列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadWarehouses();
+});
+
+// 加载仓库列表
+function loadWarehouses(page = 1) {
+    const warehouseType = document.getElementById('warehouseTypeFilter').value;
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 20,
+        warehouse_type: warehouseType
+    });
+    
+    fetch(`/inventory/api/warehouse/list?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderWarehouseTable(data.data);
+                renderPagination(data.total, page);
+                currentPage = page;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载仓库列表失败');
+        });
+}
+
+// 渲染仓库表格
+function renderWarehouseTable(warehouses) {
+    const tbody = document.getElementById('warehouseTableBody');
+    tbody.innerHTML = '';
+    
+    warehouses.forEach(warehouse => {
+        const typeText = warehouse.warehouse_type === 'qiguang' ? '启光仓库' : 
+                        warehouse.warehouse_type === 'direct_sales' ? '直营商仓库' : '未知';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${warehouse.code || ''}</td>
+            <td>${warehouse.name || ''}</td>
+            <td>${typeText}</td>
+            <td>${warehouse.address || ''}</td>
+            <td>${warehouse.manager || ''}</td>
+            <td>${warehouse.phone || ''}</td>
+            <td>${warehouse.capacity || ''}</td>
+            <td><span class="status ${warehouse.is_active ? 'active' : 'inactive'}">${warehouse.is_active ? '启用' : '禁用'}</span></td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="editWarehouse(${warehouse.id})">编辑</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 渲染分页
+function renderPagination(total, currentPage) {
+    const totalPages = Math.ceil(total / 20);
+    const pagination = document.getElementById('pagination');
+    
+    let html = '';
+    if (totalPages > 1) {
+        html += `<button class="btn btn-sm" onclick="loadWarehouses(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>上一页</button>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+            } else {
+                html += `<button class="btn btn-sm" onclick="loadWarehouses(${i})">${i}</button>`;
+            }
+        }
+        
+        html += `<button class="btn btn-sm" onclick="loadWarehouses(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>下一页</button>`;
+    }
+    
+    pagination.innerHTML = html;
+}
+
+// 搜索仓库
+function searchWarehouses() {
+    loadWarehouses(1);
+}
+
+// 显示新增仓库模态框
+function showCreateWarehouseModal() {
+    currentWarehouseId = null;
+    document.getElementById('modalTitle').textContent = '新增仓库';
+    document.getElementById('warehouseForm').reset();
+    document.getElementById('warehouseModal').style.display = 'block';
+}
+
+// 编辑仓库
+function editWarehouse(warehouseId) {
+    currentWarehouseId = warehouseId;
+    document.getElementById('modalTitle').textContent = '编辑仓库';
+    
+    // 获取仓库详情并填充表单
+    fetch(`/inventory/api/warehouse/${warehouseId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const warehouse = data.data;
+                document.getElementById('warehouseCode').value = warehouse.code || '';
+                document.getElementById('warehouseName').value = warehouse.name || '';
+                document.getElementById('warehouseType').value = warehouse.warehouse_type || '';
+                document.getElementById('address').value = warehouse.address || '';
+                document.getElementById('manager').value = warehouse.manager || '';
+                document.getElementById('phone').value = warehouse.phone || '';
+                document.getElementById('capacity').value = warehouse.capacity || '';
+                document.getElementById('description').value = warehouse.description || '';
+                
+                document.getElementById('warehouseModal').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('获取仓库详情失败');
+        });
+}
+
+// 关闭仓库模态框
+function closeWarehouseModal() {
+    document.getElementById('warehouseModal').style.display = 'none';
+}
+
+// 保存仓库
+function saveWarehouse() {
+    const formData = {
+        code: document.getElementById('warehouseCode').value,
+        name: document.getElementById('warehouseName').value,
+        warehouse_type: document.getElementById('warehouseType').value,
+        address: document.getElementById('address').value,
+        manager: document.getElementById('manager').value,
+        phone: document.getElementById('phone').value,
+        capacity: parseFloat(document.getElementById('capacity').value) || null,
+        description: document.getElementById('description').value
+    };
+    
+    const url = currentWarehouseId ? `/inventory/api/warehouse/${currentWarehouseId}` : '/inventory/api/warehouse/create';
+    const method = currentWarehouseId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('保存成功');
+            closeWarehouseModal();
+            loadWarehouses(currentPage);
+        } else {
+            alert('保存失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('保存失败');
+    });
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const modal = document.getElementById('warehouseModal');
+    if (event.target === modal) {
+        closeWarehouseModal();
+    }
+}
+</script>
+{% endblock %}
+

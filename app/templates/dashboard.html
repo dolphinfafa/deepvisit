@@ -11,61 +11,61 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px;">
     <div class="content-box" style="text-align: center;">
-        <div style="font-size: 36px; color: #3498db; margin-bottom: 10px;">📊</div>
-        <h3>客户管理</h3>
-        <p style="color: #666; margin-top: 10px;">管理终端、直营商、KOL客户</p>
-        <a href="{{ url_for('customer.terminal_list') }}" class="btn btn-primary" style="margin-top: 15px;">进入管理</a>
+        <div style="font-size: 48px; color: #3498db; margin-bottom: 16px;">📊</div>
+        <h3 style="font-size: 20px; margin-bottom: 12px;">客户管理</h3>
+        <p style="color: #666; margin-top: 12px; font-size: 15px;">管理终端、直营商、KOL客户</p>
+        <a href="{{ url_for('customer.terminal_list') }}" class="btn btn-primary" style="margin-top: 20px;">进入管理</a>
     </div>
     
     <div class="content-box" style="text-align: center;">
-        <div style="font-size: 36px; color: #27ae60; margin-bottom: 10px;">📅</div>
-        <h3>外勤管理</h3>
-        <p style="color: #666; margin-top: 10px;">拜访计划、路线、记录管理</p>
-        <a href="{{ url_for('visit.plan_list') }}" class="btn btn-success" style="margin-top: 15px;">进入管理</a>
+        <div style="font-size: 48px; color: #27ae60; margin-bottom: 16px;">📅</div>
+        <h3 style="font-size: 20px; margin-bottom: 12px;">外勤管理</h3>
+        <p style="color: #666; margin-top: 12px; font-size: 15px;">拜访计划、路线、记录管理</p>
+        <a href="{{ url_for('visit.plan_list') }}" class="btn btn-success" style="margin-top: 20px;">进入管理</a>
     </div>
     
     <div class="content-box" style="text-align: center;">
-        <div style="font-size: 36px; color: #e74c3c; margin-bottom: 10px;">💰</div>
-        <h3>订单管理</h3>
-        <p style="color: #666; margin-top: 10px;">销售、退货、发货订单</p>
-        <a href="{{ url_for('order.sales_list') }}" class="btn btn-danger" style="margin-top: 15px;">进入管理</a>
+        <div style="font-size: 48px; color: #e74c3c; margin-bottom: 16px;">💰</div>
+        <h3 style="font-size: 20px; margin-bottom: 12px;">订单管理</h3>
+        <p style="color: #666; margin-top: 12px; font-size: 15px;">销售、退货、发货订单</p>
+        <a href="{{ url_for('order.sales_list') }}" class="btn btn-danger" style="margin-top: 20px;">进入管理</a>
     </div>
     
     <div class="content-box" style="text-align: center;">
-        <div style="font-size: 36px; color: #f39c12; margin-bottom: 10px;">📦</div>
-        <h3>库存管理</h3>
-        <p style="color: #666; margin-top: 10px;">商品、库存查询管理</p>
-        <a href="{{ url_for('inventory.product_list') }}" class="btn btn-primary" style="margin-top: 15px; background: #f39c12;">进入管理</a>
+        <div style="font-size: 48px; color: #f39c12; margin-bottom: 16px;">📦</div>
+        <h3 style="font-size: 20px; margin-bottom: 12px;">库存管理</h3>
+        <p style="color: #666; margin-top: 12px; font-size: 15px;">商品、库存查询管理</p>
+        <a href="{{ url_for('inventory.product_list') }}" class="btn btn-primary" style="margin-top: 20px; background: #f39c12;">进入管理</a>
     </div>
 </div>
 
 <div class="content-box">
-    <h3 style="margin-bottom: 20px;">系统概览</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-        <div style="padding: 20px; background: #ecf0f1; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: bold; color: #3498db;">0</div>
-            <div style="color: #666; margin-top: 5px;">终端客户</div>
+    <h3 style="margin-bottom: 24px; font-size: 20px;">系统概览</h3>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">终端客户</div>
         </div>
-        <div style="padding: 20px; background: #ecf0f1; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: bold; color: #27ae60;">0</div>
-            <div style="color: #666; margin-top: 5px;">拜访计划</div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">拜访计划</div>
         </div>
-        <div style="padding: 20px; background: #ecf0f1; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: bold; color: #e74c3c;">0</div>
-            <div style="color: #666; margin-top: 5px;">待处理订单</div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">待处理订单</div>
         </div>
-        <div style="padding: 20px; background: #ecf0f1; border-radius: 8px; text-align: center;">
-            <div style="font-size: 32px; font-weight: bold; color: #f39c12;">0</div>
-            <div style="color: #666; margin-top: 5px;">待审批事项</div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">待审批事项</div>
         </div>
     </div>
 </div>
 
-<div class="content-box" style="margin-top: 20px;">
-    <h3>快速操作</h3>
-    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+<div class="content-box" style="margin-top: 24px;">
+    <h3 style="font-size: 20px; margin-bottom: 20px;">快速操作</h3>
+    <div style="display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap;">
         <a href="{{ url_for('customer.terminal_list') }}" class="btn btn-primary">新增客户</a>
         <a href="{{ url_for('visit.plan_list') }}" class="btn btn-success">新建拜访计划</a>
         <a href="{{ url_for('order.sales_list') }}" class="btn btn-danger">创建订单</a>

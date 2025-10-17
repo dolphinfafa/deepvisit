@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+
+{% block title %}采购入库单{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>采购入库单</h2>
+    <button class="btn btn-primary" onclick="showCreatePurchaseModal()">+ 新增采购单</button>
+</div>
+
+<div class="content-box">
+    <div class="search-bar">
+        <select id="statusFilter">
+            <option value="">全部状态</option>
+            <option value="draft">草稿</option>
+            <option value="pending">待审批</option>
+            <option value="approved">已审批</option>
+            <option value="rejected">已拒绝</option>
+            <option value="completed">已完成</option>
+        </select>
+        <button class="btn btn-success" onclick="searchPurchases()">查询</button>
+    </div>
+    
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>采购单号</th>
+                    <th>供应商</th>
+                    <th>单据日期</th>
+                    <th>入库仓库</th>
+                    <th>经办人</th>
+                    <th>总金额</th>
+                    <th>状态</th>
+                    <th>审批状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="purchaseTableBody">
+                <!-- 数据将通过JavaScript加载 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination" id="pagination">
+        <!-- 分页将通过JavaScript生成 -->
+    </div>
+</div>
+
+<!-- 新增/编辑采购单模态框 -->
+<div class="modal" id="purchaseModal">
+    <div class="modal-content" style="width: 80%; max-width: 1000px;">
+        <div class="modal-header">
+            <h3 id="modalTitle">新增采购单</h3>
+            <span class="close" onclick="closePurchaseModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="purchaseForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>供应商 *</label>
+                        <select id="supplierId" name="supplier_id" required onchange="updateSupplierName()">
+                            <option value="">请选择供应商</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>单据日期 *</label>
+                        <input type="date" id="documentDate" name="document_date" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>入库仓库 *</label>
+                        <select id="warehouseId" name="warehouse_id" required onchange="updateWarehouseName()">
+                            <option value="">请选择仓库</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>经办人 *</label>
+                        <input type="text" id="handler" name="handler" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>采购单据</label>
+                    <input type="file" id="purchaseDocument" name="purchase_document" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls">
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="uploadDocument()">上传</button>
+                    <input type="hidden" id="documentPath" name="purchase_document">
+                </div>
+                
+                <div class="form-group">
+                    <label>采购商品清单</label>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>商品</th>
+                                    <th>数量</th>
+                                    <th>单价</th>
+                                    <th>金额</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchaseItemsTableBody">
+                                <tr>
+                                    <td>
+                                        <select class="product-select" onchange="updateProductInfo(this)">
+                                            <option value="">请选择商品</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="number" class="quantity-input" min="1" onchange="calculateItemAmount(this)"></td>
+                                    <td><input type="number" class="cost-input" step="0.01" min="0" onchange="calculateItemAmount(this)"></td>
+                                    <td><span class="amount-display">0.00</span></td>
+                                    <td><button type="button" class="btn btn-sm btn-danger" onclick="removeItem(this)">删除</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addPurchaseItem()">+ 添加商品</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>总金额</label>
+                    <input type="number" id="totalAmount" name="total_amount" step="0.01" min="0" readonly>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePurchaseModal()">取消</button>
+            <button class="btn btn-primary" onclick="savePurchase()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 审批模态框 -->
+<div class="modal" id="approvalModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>审批采购单</h3>
+            <span class="close" onclick="closeApprovalModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="approvalForm">
+                <div class="form-group">
+                    <label>审批结果 *</label>
+                    <select id="approvalStatus" name="approval_status" required>
+                        <option value="">请选择</option>
+                        <option value="approved">通过</option>
+                        <option value="rejected">拒绝</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>审批意见</label>
+                    <textarea id="approvalComment" name="approval_comment" rows="4"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeApprovalModal()">取消</button>
+            <button class="btn btn-primary" onclick="submitApproval()">提交</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let currentPurchaseId = null;
+let currentApprovalId = null;
+
+// 页面加载时获取采购单列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadPurchases();
+    loadSuppliers();
+    loadWarehouses();
+    loadProducts();
+    
+    // 设置默认日期为今天
+    document.getElementById('documentDate').value = new Date().toISOString().split('T')[0];
+});
+
+// 加载采购单列表
+function loadPurchases(page = 1) {
+    const status = document.getElementById('statusFilter').value;
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 20,
+        status: status
+    });
+    
+    fetch(`/inventory/api/purchase/list?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderPurchaseTable(data.data);
+                renderPagination(data.total, page);
+                currentPage = page;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载采购单列表失败');
+        });
+}
+
+// 渲染采购单表格
+function renderPurchaseTable(purchases) {
+    const tbody = document.getElementById('purchaseTableBody');
+    tbody.innerHTML = '';
+    
+    purchases.forEach(purchase => {
+        const statusText = getStatusText(purchase.status);
+        const approvalStatusText = getApprovalStatusText(purchase.approval_status);
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${purchase.order_no || ''}</td>
+            <td>${purchase.supplier_name || ''}</td>
+            <td>${purchase.document_date || ''}</td>
+            <td>${purchase.warehouse_name || ''}</td>
+            <td>${purchase.handler || ''}</td>
+            <td>${purchase.total_amount || 0}</td>
+            <td><span class="status ${purchase.status}">${statusText}</span></td>
+            <td><span class="status ${purchase.approval_status}">${approvalStatusText}</span></td>
+            <td>
+                ${purchase.approval_status === 'pending' ? 
+                    `<button class="btn btn-sm btn-warning" onclick="showApprovalModal(${purchase.id})">审批</button>` : 
+                    ''
+                }
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 获取状态文本
+function getStatusText(status) {
+    const statusMap = {
+        'draft': '草稿',
+        'pending': '待审批',
+        'approved': '已审批',
+        'rejected': '已拒绝',
+        'completed': '已完成',
+        'cancelled': '已取消'
+    };
+    return statusMap[status] || status;
+}
+
+// 获取审批状态文本
+function getApprovalStatusText(status) {
+    const statusMap = {
+        'pending': '待审批',
+        'approved': '已通过',
+        'rejected': '已拒绝'
+    };
+    return statusMap[status] || status;
+}
+
+// 渲染分页
+function renderPagination(total, currentPage) {
+    const totalPages = Math.ceil(total / 20);
+    const pagination = document.getElementById('pagination');
+    
+    let html = '';
+    if (totalPages > 1) {
+        html += `<button class="btn btn-sm" onclick="loadPurchases(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>上一页</button>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                html += `<button class="btn btn-sm btn-primary">${i}</button>`;
+            } else {
+                html += `<button class="btn btn-sm" onclick="loadPurchases(${i})">${i}</button>`;
+            }
+        }
+        
+        html += `<button class="btn btn-sm" onclick="loadPurchases(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>下一页</button>`;
+    }
+    
+    pagination.innerHTML = html;
+}
+
+// 搜索采购单
+function searchPurchases() {
+    loadPurchases(1);
+}
+
+// 加载供应商列表
+function loadSuppliers() {
+    fetch('/inventory/api/supplier/list?per_page=1000')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('supplierId');
+                select.innerHTML = '<option value="">请选择供应商</option>';
+                data.data.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.id;
+                    option.textContent = supplier.name;
+                    option.dataset.name = supplier.name;
+                    select.appendChild(option);
+                });
+            }
+        });
+}
+
+// 加载仓库列表
+function loadWarehouses() {
+    fetch('/inventory/api/warehouse/list?per_page=1000')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('warehouseId');
+                select.innerHTML = '<option value="">请选择仓库</option>';
+                data.data.forEach(warehouse => {
+                    const option = document.createElement('option');
+                    option.value = warehouse.id;
+                    option.textContent = warehouse.name;
+                    option.dataset.name = warehouse.name;
+                    select.appendChild(option);
+                });
+            }
+        });
+}
+
+// 加载商品列表
+function loadProducts() {
+    fetch('/inventory/api/product/list?per_page=1000')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.products = data.data;
+                updateProductSelects();
+            }
+        });
+}
+
+// 更新商品选择框
+function updateProductSelects() {
+    const selects = document.querySelectorAll('.product-select');
+    selects.forEach(select => {
+        if (select.children.length <= 1) { // 只有默认选项
+            select.innerHTML = '<option value="">请选择商品</option>';
+            window.products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = `${product.name} (${product.code})`;
+                option.dataset.cost = product.cost || 0;
+                select.appendChild(option);
+            });
+        }
+    });
+}
+
+// 更新供应商名称
+function updateSupplierName() {
+    const select = document.getElementById('supplierId');
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption.dataset.name) {
+        // 这里可以设置一个隐藏字段来存储供应商名称
+    }
+}
+
+// 更新仓库名称
+function updateWarehouseName() {
+    const select = document.getElementById('warehouseId');
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption.dataset.name) {
+        // 这里可以设置一个隐藏字段来存储仓库名称
+    }
+}
+
+// 更新商品信息
+function updateProductInfo(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    const row = select.closest('tr');
+    const costInput = row.querySelector('.cost-input');
+    if (selectedOption.dataset.cost) {
+        costInput.value = selectedOption.dataset.cost;
+        calculateItemAmount(costInput);
+    }
+}
+
+// 计算商品金额
+function calculateItemAmount(input) {
+    const row = input.closest('tr');
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const cost = parseFloat(row.querySelector('.cost-input').value) || 0;
+    const amount = quantity * cost;
+    
+    row.querySelector('.amount-display').textContent = amount.toFixed(2);
+    calculateTotalAmount();
+}
+
+// 计算总金额
+function calculateTotalAmount() {
+    const amounts = document.querySelectorAll('.amount-display');
+    let total = 0;
+    amounts.forEach(amount => {
+        total += parseFloat(amount.textContent) || 0;
+    });
+    document.getElementById('totalAmount').value = total.toFixed(2);
+}
+
+// 添加采购商品
+function addPurchaseItem() {
+    const tbody = document.getElementById('purchaseItemsTableBody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            <select class="product-select" onchange="updateProductInfo(this)">
+                <option value="">请选择商品</option>
+            </select>
+        </td>
+        <td><input type="number" class="quantity-input" min="1" onchange="calculateItemAmount(this)"></td>
+        <td><input type="number" class="cost-input" step="0.01" min="0" onchange="calculateItemAmount(this)"></td>
+        <td><span class="amount-display">0.00</span></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeItem(this)">删除</button></td>
+    `;
+    tbody.appendChild(row);
+    updateProductSelects();
+}
+
+// 删除商品
+function removeItem(button) {
+    button.closest('tr').remove();
+    calculateTotalAmount();
+}
+
+// 上传文档
+function uploadDocument() {
+    const fileInput = document.getElementById('purchaseDocument');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('请选择文件');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    fetch('/inventory/api/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('documentPath').value = data.file_path;
+            alert('上传成功');
+        } else {
+            alert('上传失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('上传失败');
+    });
+}
+
+// 显示新增采购单模态框
+function showCreatePurchaseModal() {
+    currentPurchaseId = null;
+    document.getElementById('modalTitle').textContent = '新增采购单';
+    document.getElementById('purchaseForm').reset();
+    document.getElementById('documentDate').value = new Date().toISOString().split('T')[0];
+    
+    // 重置商品清单
+    const tbody = document.getElementById('purchaseItemsTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td>
+                <select class="product-select" onchange="updateProductInfo(this)">
+                    <option value="">请选择商品</option>
+                </select>
+            </td>
+            <td><input type="number" class="quantity-input" min="1" onchange="calculateItemAmount(this)"></td>
+            <td><input type="number" class="cost-input" step="0.01" min="0" onchange="calculateItemAmount(this)"></td>
+            <td><span class="amount-display">0.00</span></td>
+            <td><button type="button" class="btn btn-sm btn-danger" onclick="removeItem(this)">删除</button></td>
+        </tr>
+    `;
+    updateProductSelects();
+    
+    document.getElementById('purchaseModal').style.display = 'block';
+}
+
+// 关闭采购单模态框
+function closePurchaseModal() {
+    document.getElementById('purchaseModal').style.display = 'none';
+}
+
+// 保存采购单
+function savePurchase() {
+    // 收集商品清单
+    const items = [];
+    const rows = document.querySelectorAll('#purchaseItemsTableBody tr');
+    
+    rows.forEach(row => {
+        const productSelect = row.querySelector('.product-select');
+        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+        const cost = parseFloat(row.querySelector('.cost-input').value) || 0;
+        
+        if (productSelect.value && quantity > 0) {
+            items.push({
+                product_id: parseInt(productSelect.value),
+                product_name: productSelect.options[productSelect.selectedIndex].textContent,
+                quantity: quantity,
+                cost: cost,
+                amount: quantity * cost
+            });
+        }
+    });
+    
+    if (items.length === 0) {
+        alert('请至少添加一个商品');
+        return;
+    }
+    
+    const formData = {
+        supplier_id: document.getElementById('supplierId').value,
+        supplier_name: document.getElementById('supplierId').options[document.getElementById('supplierId').selectedIndex].dataset.name,
+        warehouse_id: document.getElementById('warehouseId').value,
+        warehouse_name: document.getElementById('warehouseId').options[document.getElementById('warehouseId').selectedIndex].dataset.name,
+        handler: document.getElementById('handler').value,
+        document_date: document.getElementById('documentDate').value,
+        purchase_document: document.getElementById('documentPath').value,
+        items: items,
+        total_amount: parseFloat(document.getElementById('totalAmount').value) || 0
+    };
+    
+    fetch('/inventory/api/purchase/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('保存成功');
+            closePurchaseModal();
+            loadPurchases(currentPage);
+        } else {
+            alert('保存失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('保存失败');
+    });
+}
+
+// 显示审批模态框
+function showApprovalModal(purchaseId) {
+    currentApprovalId = purchaseId;
+    document.getElementById('approvalForm').reset();
+    document.getElementById('approvalModal').style.display = 'block';
+}
+
+// 关闭审批模态框
+function closeApprovalModal() {
+    document.getElementById('approvalModal').style.display = 'none';
+}
+
+// 提交审批
+function submitApproval() {
+    const formData = {
+        approval_status: document.getElementById('approvalStatus').value,
+        approval_comment: document.getElementById('approvalComment').value
+    };
+    
+    fetch(`/inventory/api/purchase/approve/${currentApprovalId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('审批完成');
+            closeApprovalModal();
+            loadPurchases(currentPage);
+        } else {
+            alert('审批失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('审批失败');
+    });
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const purchaseModal = document.getElementById('purchaseModal');
+    const approvalModal = document.getElementById('approvalModal');
+    
+    if (event.target === purchaseModal) {
+        closePurchaseModal();
+    }
+    if (event.target === approvalModal) {
+        closeApprovalModal();
+    }
+}
+</script>
+
+<style>
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.table-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.status.draft { background-color: #f8f9fa; color: #6c757d; }
+.status.pending { background-color: #fff3cd; color: #856404; }
+.status.approved { background-color: #d4edda; color: #155724; }
+.status.rejected { background-color: #f8d7da; color: #721c24; }
+.status.completed { background-color: #d1ecf1; color: #0c5460; }
+</style>
+{% endblock %}
+

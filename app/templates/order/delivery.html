@@ -8,7 +8,518 @@
 </div>
 
 <div class="content-box">
-    <p style="text-align: center; padding: 40px; color: #666;">发货订单列表将在此显示</p>
-</div>
-{% endblock %}
+    <div class="search-bar">
+        <div class="row">
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-control" onchange="loadOrders()">
+                    <option value="">全部状态</option>
+                    <option value="pending">待发货</option>
+                    <option value="shipped">已发货</option>
+                    <option value="completed">已完成</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="searchInput" class="form-control" placeholder="搜索发货单号、订单编号、客户名称...">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-success" onclick="loadOrders()">查询</button>
+                <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
+            </div>
+        </div>
+    </div>
 
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>发货单号</th>
+                    <th>订单编号</th>
+                    <th>发货状态</th>
+                    <th>客户名称</th>
+                    <th>收货地址</th>
+                    <th>发货仓库</th>
+                    <th>业务员</th>
+                    <th>下单时间</th>
+                    <th>交货日期</th>
+                    <th>金额</th>
+                    <th>发货商品清单</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <!-- 动态加载发货订单数据 -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination" id="pagination">
+                <!-- 动态生成分页 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 发货确认模态框 -->
+<div class="modal fade" id="shipModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">发货确认</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="shipForm">
+                    <div class="form-group">
+                        <label>出库凭证 *</label>
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="voucherFile" accept="image/*" style="display: none;">
+                            <div class="upload-placeholder" onclick="document.getElementById('voucherFile').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击上传出库凭证图片</p>
+                                <small>支持 JPG、PNG 格式</small>
+                            </div>
+                            <div class="uploaded-file" id="uploadedFile" style="display: none;">
+                                <img id="voucherPreview" style="max-width: 200px; max-height: 200px;">
+                                <p id="fileName"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>出库备注</label>
+                        <textarea id="outboundComment" class="form-control" rows="3" placeholder="请输入出库备注信息"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-success" onclick="confirmShip()">确认发货</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 订单详情模态框 -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">发货订单详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- 动态加载订单详情 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let currentOrderId = null;
+let uploadedVoucherPath = '';
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+    
+    // 文件上传处理
+    document.getElementById('voucherFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            uploadVoucher(file);
+        }
+    });
+});
+
+// 加载发货订单列表
+function loadOrders(page = 1) {
+    currentPage = page;
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchInput').value;
+    
+    let url = `/order/api/delivery/list?page=${page}&per_page=20`;
+    if (status) url += `&status=${status}`;
+    if (search) url += `&search=${search}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderOrders(data.data);
+                renderPagination(data.total, data.page, data.per_page);
+            } else {
+                alert('加载发货订单列表失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载发货订单列表失败');
+        });
+}
+
+// 渲染发货订单列表
+function renderOrders(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = '';
+    
+    if (orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center">暂无数据</td></tr>';
+        return;
+    }
+    
+    orders.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${order.order_no}</td>
+            <td>${order.sales_order_no}</td>
+            <td>${getStatusBadge(order.status)}</td>
+            <td>${order.customer_name || '-'}</td>
+            <td>${order.receiver_address || '-'}</td>
+            <td>${order.warehouse || '-'}</td>
+            <td>${order.salesman || '-'}</td>
+            <td>${formatDate(order.order_date)}</td>
+            <td>${formatDate(order.delivery_date)}</td>
+            <td>¥${order.total_amount.toFixed(2)}</td>
+            <td>${getOrderItems(order.items)}</td>
+            <td>${getActionButtons(order)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 获取状态标签
+function getStatusBadge(status) {
+    const statusMap = {
+        'pending': '<span class="badge badge-warning">待发货</span>',
+        'shipped': '<span class="badge badge-info">已发货</span>',
+        'completed': '<span class="badge badge-success">已完成</span>'
+    };
+    return statusMap[status] || status;
+}
+
+// 获取订单商品
+function getOrderItems(items) {
+    if (!items || items.length === 0) return '-';
+    
+    const itemNames = items.map(item => item.product_name).join(', ');
+    return itemNames.length > 30 ? itemNames.substring(0, 30) + '...' : itemNames;
+}
+
+// 获取操作按钮
+function getActionButtons(order) {
+    let buttons = '';
+    
+    // 查看详情
+    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})">查看</button>`;
+    
+    // 根据状态显示不同操作
+    if (order.status === 'pending') {
+        buttons += `<button class="btn btn-sm btn-success" onclick="showShipModal(${order.id})">发货</button>`;
+    } else if (order.status === 'shipped') {
+        buttons += `<button class="btn btn-sm btn-primary" onclick="completeOrder(${order.id})">完成</button>`;
+    }
+    
+    return buttons;
+}
+
+// 格式化日期
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN');
+}
+
+// 查看订单详情
+function viewOrder(orderId) {
+    fetch(`/order/api/delivery/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showOrderDetail(data.data);
+            } else {
+                alert('获取订单详情失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('获取订单详情失败');
+        });
+}
+
+// 显示订单详情
+function showOrderDetail(order) {
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>基本信息</h6>
+                <table class="table table-sm">
+                    <tr><td>发货单号：</td><td>${order.order_no}</td></tr>
+                    <tr><td>订单编号：</td><td>${order.sales_order_no}</td></tr>
+                    <tr><td>客户名称：</td><td>${order.customer_name || '-'}</td></tr>
+                    <tr><td>收货地址：</td><td>${order.receiver_address || '-'}</td></tr>
+                    <tr><td>发货仓库：</td><td>${order.warehouse || '-'}</td></tr>
+                    <tr><td>业务员：</td><td>${order.salesman || '-'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>时间信息</h6>
+                <table class="table table-sm">
+                    <tr><td>下单时间：</td><td>${formatDate(order.order_date)}</td></tr>
+                    <tr><td>交货日期：</td><td>${formatDate(order.delivery_date)}</td></tr>
+                    <tr><td>发货时间：</td><td>${order.shipped_at ? formatDate(order.shipped_at) : '-'}</td></tr>
+                    <tr><td>发货人：</td><td>${order.shipped_by || '-'}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>商品清单</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>商品名称</th>
+                            <th>数量</th>
+                            <th>单价</th>
+                            <th>小计</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(item => `
+                            <tr>
+                                <td>${item.product_name}</td>
+                                <td>${item.quantity}</td>
+                                <td>¥${item.price.toFixed(2)}</td>
+                                <td>¥${(item.quantity * item.price).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="text-right">
+                    <strong>总金额：¥${order.total_amount.toFixed(2)}</strong>
+                </div>
+            </div>
+        </div>
+        
+        ${order.outbound_voucher ? `
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>出库凭证</h6>
+                <img src="${order.outbound_voucher}" class="img-fluid" style="max-width: 300px;">
+                ${order.outbound_comment ? `<p class="mt-2"><strong>备注：</strong>${order.outbound_comment}</p>` : ''}
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('orderDetailContent').innerHTML = content;
+    $('#detailModal').modal('show');
+}
+
+// 显示发货确认模态框
+function showShipModal(orderId) {
+    currentOrderId = orderId;
+    uploadedVoucherPath = '';
+    document.getElementById('shipForm').reset();
+    document.getElementById('uploadedFile').style.display = 'none';
+    document.getElementById('uploadArea').style.display = 'block';
+    $('#shipModal').modal('show');
+}
+
+// 上传凭证
+function uploadVoucher(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    fetch('/order/api/delivery/upload-voucher', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            uploadedVoucherPath = data.file_path;
+            document.getElementById('voucherPreview').src = data.file_path;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('uploadArea').style.display = 'none';
+            document.getElementById('uploadedFile').style.display = 'block';
+        } else {
+            alert('上传失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('上传失败');
+    });
+}
+
+// 确认发货
+function confirmShip() {
+    if (!uploadedVoucherPath) {
+        alert('请上传出库凭证');
+        return;
+    }
+    
+    const comment = document.getElementById('outboundComment').value;
+    
+    fetch(`/order/api/delivery/ship/${currentOrderId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            outbound_voucher: uploadedVoucherPath,
+            outbound_comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            $('#shipModal').modal('hide');
+            loadOrders(currentPage);
+        } else {
+            alert('发货确认失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('发货确认失败');
+    });
+}
+
+// 完成订单
+function completeOrder(orderId) {
+    if (confirm('确定要完成此发货订单吗？')) {
+        fetch(`/order/api/delivery/complete/${orderId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                loadOrders(currentPage);
+            } else {
+                alert('完成订单失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('完成订单失败');
+        });
+    }
+}
+
+// 渲染分页
+function renderPagination(total, page, perPage) {
+    const totalPages = Math.ceil(total / perPage);
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // 上一页
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${page === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${page - 1})">上一页</a>`;
+    pagination.appendChild(prevLi);
+    
+    // 页码
+    const startPage = Math.max(1, page - 2);
+    const endPage = Math.min(totalPages, page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === page ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${i})">${i}</a>`;
+        pagination.appendChild(li);
+    }
+    
+    // 下一页
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${page === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${page + 1})">下一页</a>`;
+    pagination.appendChild(nextLi);
+}
+
+// 重置搜索
+function resetSearch() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    loadOrders(1);
+}
+</script>
+
+<style>
+.search-bar {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.badge {
+    font-size: 12px;
+}
+
+.btn-sm {
+    margin-right: 5px;
+}
+
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+}
+
+.upload-placeholder i {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 10px;
+}
+
+.uploaded-file {
+    text-align: center;
+}
+
+.uploaded-file img {
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

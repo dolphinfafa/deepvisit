@@ -22,13 +22,14 @@ def create_app(config_class=Config):
     CORS(app)
     
     # 注册蓝图
-    from app.routes import auth, customer, visit, order, inventory, system
+    from app.routes import auth, customer, visit, order, inventory, system, activity
     app.register_blueprint(auth.bp)
     app.register_blueprint(customer.bp)
     app.register_blueprint(visit.bp)
     app.register_blueprint(order.bp)
     app.register_blueprint(inventory.bp)
     app.register_blueprint(system.bp)
+    app.register_blueprint(activity.bp)
     
     # 注册主页路由
     from app.routes import main

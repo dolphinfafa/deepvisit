@@ -5,11 +5,495 @@
 {% block content %}
 <div class="header">
     <h2>退货订单管理</h2>
-    <button class="btn btn-primary" onclick="alert('功能开发中')">+ 新增退货</button>
+    <button class="btn btn-primary" onclick="window.location.href='/order/return/create'">+ 新增退货</button>
 </div>
 
 <div class="content-box">
-    <p style="text-align: center; padding: 40px; color: #666;">退货订单列表将在此显示</p>
+    <div class="search-bar">
+        <div class="row">
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-control" onchange="loadOrders()">
+                    <option value="">全部状态</option>
+                    <option value="draft">草稿</option>
+                    <option value="pending">待审批</option>
+                    <option value="approved">已审批</option>
+                    <option value="rejected">已拒绝</option>
+                    <option value="confirmed">已确认</option>
+                    <option value="cancelled">已取消</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="searchInput" class="form-control" placeholder="搜索订单编号、客户名称...">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-success" onclick="loadOrders()">查询</button>
+                <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>退货订单</th>
+                    <th>订单编号</th>
+                    <th>客户名称</th>
+                    <th>收货地址</th>
+                    <th>收货仓库</th>
+                    <th>业务员</th>
+                    <th>退货时间</th>
+                    <th>合计金额</th>
+                    <th>退货商品</th>
+                    <th>审批流程</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <!-- 动态加载订单数据 -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination" id="pagination">
+                <!-- 动态生成分页 -->
+            </ul>
+        </nav>
+    </div>
 </div>
+
+<!-- 审批模态框 -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">退货订单审批</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>审批意见</label>
+                    <textarea id="approvalComment" class="form-control" rows="3" placeholder="请输入审批意见"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="approveOrder('reject')">拒绝</button>
+                <button type="button" class="btn btn-success" onclick="approveOrder('approve')">通过</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 退货确认模态框 -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">退货确认</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>上传退货接收凭证 <span class="required">*</span></label>
+                    <input type="file" id="voucherFile" class="form-control" accept="image/*,.pdf" onchange="handleFileSelect(this)">
+                    <small class="form-text text-muted">支持图片和PDF格式</small>
+                </div>
+                <div class="form-group" id="filePreview" style="display: none;">
+                    <label>文件预览</label>
+                    <div id="previewContent"></div>
+                </div>
+                <div class="form-group">
+                    <label>接收备注</label>
+                    <textarea id="receiveComment" class="form-control" rows="3" placeholder="请输入接收备注（可选）"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmReturn()">确认退货</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let currentOrderId = null;
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+});
+
+// 加载订单列表
+function loadOrders(page = 1) {
+    currentPage = page;
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchInput').value;
+    
+    let url = `/order/api/return/list?page=${page}&per_page=20`;
+    if (status) url += `&status=${status}`;
+    if (search) url += `&search=${search}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderOrders(data.data);
+                renderPagination(data.total, data.page, data.per_page);
+            } else {
+                alert('加载退货订单列表失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载退货订单列表失败');
+        });
+}
+
+// 渲染订单列表
+function renderOrders(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = '';
+    
+    if (orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center">暂无数据</td></tr>';
+        return;
+    }
+    
+    orders.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${getReturnTypeBadge(order.return_type)}</td>
+            <td>${order.order_no}</td>
+            <td>${order.customer_name || '-'}</td>
+            <td>${order.receiver_address || '-'}</td>
+            <td>${order.warehouse || '-'}</td>
+            <td>${order.salesman || '-'}</td>
+            <td>${formatDate(order.order_date)}</td>
+            <td>¥${order.total_amount.toFixed(2)}</td>
+            <td>${getOrderItems(order.items)}</td>
+            <td>${getApprovalStatus(order)}</td>
+            <td>${getActionButtons(order)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 获取退货方式标签
+function getReturnTypeBadge(returnType) {
+    const typeMap = {
+        'sales_order': '<span class="badge badge-info">关联销售订单</span>',
+        'direct': '<span class="badge badge-secondary">直接退货</span>'
+    };
+    return typeMap[returnType] || returnType;
+}
+
+// 获取状态标签
+function getStatusBadge(status) {
+    const statusMap = {
+        'draft': '<span class="badge badge-secondary">草稿</span>',
+        'pending': '<span class="badge badge-warning">待审批</span>',
+        'approved': '<span class="badge badge-success">已审批</span>',
+        'rejected': '<span class="badge badge-danger">已拒绝</span>',
+        'confirmed': '<span class="badge badge-info">已确认</span>',
+        'cancelled': '<span class="badge badge-dark">已取消</span>'
+    };
+    return statusMap[status] || status;
+}
+
+// 获取订单商品
+function getOrderItems(items) {
+    if (!items || items.length === 0) return '-';
+    
+    const itemNames = items.map(item => item.product_name).join(', ');
+    return itemNames.length > 50 ? itemNames.substring(0, 50) + '...' : itemNames;
+}
+
+// 获取审批状态
+function getApprovalStatus(order) {
+    if (order.approval_status === 'approved') {
+        return `<span class="badge badge-success">已通过</span><br><small>${order.approved_by || '-'}</small>`;
+    } else if (order.approval_status === 'rejected') {
+        return `<span class="badge badge-danger">已拒绝</span><br><small>${order.approved_by || '-'}</small>`;
+    } else {
+        return '<span class="badge badge-warning">待审批</span>';
+    }
+}
+
+// 获取操作按钮
+function getActionButtons(order) {
+    let buttons = '';
+    
+    // 查看详情
+    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})">查看</button>`;
+    
+    // 根据状态显示不同操作
+    if (order.status === 'draft') {
+        buttons += `<button class="btn btn-sm btn-warning" onclick="submitOrder(${order.id})">提交</button>`;
+    } else if (order.status === 'pending') {
+        buttons += `<button class="btn btn-sm btn-success" onclick="showApprovalModal(${order.id})">审批</button>`;
+    } else if (order.status === 'approved') {
+        buttons += `<button class="btn btn-sm btn-primary" onclick="showConfirmModal(${order.id})">确认退货</button>`;
+    }
+    
+    return buttons;
+}
+
+// 提交订单
+function submitOrder(orderId) {
+    if (confirm('确定要提交此退货订单进行审批吗？')) {
+        fetch(`/order/api/return/submit/${orderId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('退货订单提交成功');
+                loadOrders(currentPage);
+            } else {
+                alert('提交失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('提交失败');
+        });
+    }
+}
+
+// 显示审批模态框
+function showApprovalModal(orderId) {
+    currentOrderId = orderId;
+    $('#approvalModal').modal('show');
+}
+
+// 显示退货确认模态框
+function showConfirmModal(orderId) {
+    currentOrderId = orderId;
+    // 重置表单
+    document.getElementById('voucherFile').value = '';
+    document.getElementById('receiveComment').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+    $('#confirmModal').modal('show');
+}
+
+// 审批订单
+function approveOrder(action) {
+    const comment = document.getElementById('approvalComment').value;
+    
+    fetch(`/order/api/return/approve/${currentOrderId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: action,
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            $('#approvalModal').modal('hide');
+            document.getElementById('approvalComment').value = '';
+            loadOrders(currentPage);
+        } else {
+            alert('审批失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('审批失败');
+    });
+}
+
+// 查看订单详情
+function viewOrder(orderId) {
+    // 这里可以实现订单详情查看功能
+    alert('退货订单详情功能开发中...');
+}
+
+// 格式化日期
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN');
+}
+
+// 渲染分页
+function renderPagination(total, page, perPage) {
+    const totalPages = Math.ceil(total / perPage);
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // 上一页
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${page === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${page - 1})">上一页</a>`;
+    pagination.appendChild(prevLi);
+    
+    // 页码
+    const startPage = Math.max(1, page - 2);
+    const endPage = Math.min(totalPages, page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === page ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${i})">${i}</a>`;
+        pagination.appendChild(li);
+    }
+    
+    // 下一页
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${page === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${page + 1})">下一页</a>`;
+    pagination.appendChild(nextLi);
+}
+
+// 重置搜索
+function resetSearch() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    loadOrders(1);
+}
+
+// 处理文件选择
+function handleFileSelect(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('filePreview');
+    const previewContent = document.getElementById('previewContent');
+    
+    if (file) {
+        preview.style.display = 'block';
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContent.innerHTML = `<img src="${e.target.result}" class="img-thumbnail" style="max-width: 300px; max-height: 200px;">`;
+            };
+            reader.readAsDataURL(file);
+        } else if (file.type === 'application/pdf') {
+            previewContent.innerHTML = `<div class="alert alert-info">
+                <i class="fas fa-file-pdf"></i> PDF文件: ${file.name}
+                <br><small>大小: ${(file.size / 1024).toFixed(2)} KB</small>
+            </div>`;
+        } else {
+            previewContent.innerHTML = `<div class="alert alert-warning">
+                <i class="fas fa-file"></i> ${file.name}
+                <br><small>大小: ${(file.size / 1024).toFixed(2)} KB</small>
+            </div>`;
+        }
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// 确认退货
+function confirmReturn() {
+    const fileInput = document.getElementById('voucherFile');
+    const comment = document.getElementById('receiveComment').value;
+    
+    if (!fileInput.files[0]) {
+        alert('请选择退货接收凭证');
+        return;
+    }
+    
+    // 先上传文件
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    fetch('/order/api/return/upload-voucher', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 文件上传成功，确认退货订单
+            return fetch(`/order/api/return/confirm/${currentOrderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    receive_voucher: data.file_path,
+                    receive_comment: comment
+                })
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('退货确认成功');
+            $('#confirmModal').modal('hide');
+            loadOrders(currentPage);
+        } else {
+            alert('确认失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('确认失败: ' + error.message);
+    });
+}
+</script>
+
+<style>
+.search-bar {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.badge {
+    font-size: 12px;
+}
+
+.btn-sm {
+    margin-right: 5px;
+}
+
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+}
+
+.required {
+    color: red;
+}
+
+.img-thumbnail {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+</style>
 {% endblock %}
 

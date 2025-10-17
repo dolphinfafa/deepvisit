@@ -10,7 +10,7 @@
 
 <div class="content-box">
     <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="搜索客户名称、编号、手机号..." onkeyup="searchCustomers()">
+        <input type="text" id="searchInput" placeholder="搜索终端名称、编码、手机号、营业执照名称、工商注册号..." onkeyup="searchCustomers()">
         <select id="statusFilter" onchange="loadData()">
             <option value="">全部状态</option>
             <option value="pending">待审批</option>
@@ -23,21 +23,37 @@
     <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th>编号</th>
-                <th>名称</th>
-                <th>类型</th>
+                <th>终端名称</th>
+                <th>终端客户编码</th>
+                <th>终端类型</th>
+                <th>客户等级</th>
                 <th>客户经理</th>
-                <th>电话</th>
-                <th>地址</th>
+                <th>客户协助员</th>
+                <th>销售区域</th>
+                <th>终端标签</th>
+                <th>供货商</th>
                 <th>合作状态</th>
+                <th>手机号</th>
+                <th>备注</th>
+                <th>拜访频率</th>
                 <th>审批状态</th>
-                <th>创建时间</th>
+                <th>营业执照</th>
+                <th>营业执照名称</th>
+                <th>工商注册号</th>
+                <th>注册日期</th>
+                <th>经营者</th>
+                <th>收货人姓名</th>
+                <th>收货人手机号</th>
+                <th>收货地址</th>
+                <th>详细地址</th>
+                <th>联系人姓名</th>
+                <th>联系人手机号</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <tr>
-                <td colspan="10" style="text-align: center; padding: 40px;">加载中...</td>
+                <td colspan="26" style="text-align: center; padding: 40px;">加载中...</td>
             </tr>
         </tbody>
     </table>
@@ -47,48 +63,176 @@
 
 <!-- 新增/编辑模态框 -->
 <div class="modal" id="createModal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
         <h3>新增终端客户</h3>
         <form id="createForm">
-            <div class="form-group">
-                <label>客户编码 *</label>
-                <input type="text" name="code" required>
-            </div>
-            <div class="form-group">
-                <label>客户名称 *</label>
-                <input type="text" name="name" required>
-            </div>
-            <div class="form-group">
-                <label>类型</label>
-                <select name="type">
-                    <option value="餐饮">餐饮</option>
-                    <option value="零售">零售</option>
-                    <option value="批发">批发</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>客户等级</label>
-                <select name="level">
-                    <option value="A">A级</option>
-                    <option value="B">B级</option>
-                    <option value="C">C级</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>拜访频率</label>
-                <select name="visit_frequency">
-                    <option value="每天">每天</option>
-                    <option value="每周">每周</option>
-                    <option value="每月">每月</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>电话</label>
-                <input type="text" name="phone">
-            </div>
-            <div class="form-group">
-                <label>地址</label>
-                <input type="text" name="address">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <!-- 基本信息 -->
+                <div class="form-group">
+                    <label>终端名称 *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>终端客户编码 *</label>
+                    <input type="text" name="code" required>
+                </div>
+                <div class="form-group">
+                    <label>终端类型</label>
+                    <select name="type">
+                        <option value="餐饮">餐饮</option>
+                        <option value="零售">零售</option>
+                        <option value="批发">批发</option>
+                        <option value="超市">超市</option>
+                        <option value="便利店">便利店</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>客户等级</label>
+                    <select name="level">
+                        <option value="A">A级</option>
+                        <option value="B">B级</option>
+                        <option value="C">C级</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>客户经理</label>
+                    <select name="manager_id">
+                        <option value="">请选择客户经理</option>
+                        <option value="1">张三</option>
+                        <option value="2">李四</option>
+                        <option value="3">王五</option>
+                        <option value="4">赵六</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>客户协助员</label>
+                    <select name="assistant_id">
+                        <option value="">请选择客户协助员</option>
+                        <option value="1">张三</option>
+                        <option value="2">李四</option>
+                        <option value="3">王五</option>
+                        <option value="4">赵六</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>销售区域</label>
+                    <select name="sales_area">
+                        <option value="">请选择销售区域</option>
+                        <option value="华北区">华北区</option>
+                        <option value="华东区">华东区</option>
+                        <option value="华南区">华南区</option>
+                        <option value="华中区">华中区</option>
+                        <option value="西南区">西南区</option>
+                        <option value="西北区">西北区</option>
+                        <option value="东北区">东北区</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>终端标签</label>
+                    <select name="tags">
+                        <option value="">请选择终端标签</option>
+                        <option value="重点客户">重点客户</option>
+                        <option value="VIP客户">VIP客户</option>
+                        <option value="普通客户">普通客户</option>
+                        <option value="潜在客户">潜在客户</option>
+                        <option value="流失客户">流失客户</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>供货商</label>
+                    <select name="supplier">
+                        <option value="">请选择供货商</option>
+                        <option value="供应商A">供应商A</option>
+                        <option value="供应商B">供应商B</option>
+                        <option value="供应商C">供应商C</option>
+                        <option value="供应商D">供应商D</option>
+                        <option value="供应商E">供应商E</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>合作状态</label>
+                    <select name="cooperation_status">
+                        <option value="合作中">合作中</option>
+                        <option value="暂停合作">暂停合作</option>
+                        <option value="终止合作">终止合作</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="text" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea name="remark" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>拜访频率</label>
+                    <select name="visit_frequency">
+                        <option value="每天">每天</option>
+                        <option value="每周">每周</option>
+                        <option value="每月">每月</option>
+                        <option value="每季度">每季度</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>审批状态</label>
+                    <select name="approval_status">
+                        <option value="pending">待审批</option>
+                        <option value="approved">已通过</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                </div>
+                
+                <!-- 营业执照信息 -->
+                <div class="form-group">
+                    <label>营业执照</label>
+                    <input type="file" name="business_license" accept="image/*" onchange="previewImage(this)">
+                    <div id="license-preview" style="margin-top: 10px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>营业执照名称</label>
+                    <input type="text" name="license_name">
+                </div>
+                <div class="form-group">
+                    <label>工商注册号</label>
+                    <input type="text" name="registration_no">
+                </div>
+                <div class="form-group">
+                    <label>注册日期</label>
+                    <input type="date" name="registration_date">
+                </div>
+                <div class="form-group">
+                    <label>经营者</label>
+                    <input type="text" name="operator">
+                </div>
+                
+                <!-- 收货信息 -->
+                <div class="form-group">
+                    <label>收货人姓名</label>
+                    <input type="text" name="receiver_name">
+                </div>
+                <div class="form-group">
+                    <label>收货人手机号</label>
+                    <input type="text" name="receiver_phone">
+                </div>
+                <div class="form-group">
+                    <label>收货地址</label>
+                    <input type="text" name="receiver_address">
+                </div>
+                <div class="form-group">
+                    <label>详细地址</label>
+                    <input type="text" name="detail_address">
+                </div>
+                
+                <!-- 联系人信息 -->
+                <div class="form-group">
+                    <label>联系人姓名</label>
+                    <input type="text" name="contact_name">
+                </div>
+                <div class="form-group">
+                    <label>联系人手机号</label>
+                    <input type="text" name="contact_phone">
+                </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button type="submit" class="btn btn-primary">保存</button>
@@ -122,21 +266,37 @@
         const tbody = document.getElementById('tableBody');
         
         if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="26" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
             return;
         }
         
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td>${item.code}</td>
-                <td>${item.name}</td>
+                <td>${item.name || '-'}</td>
+                <td>${item.code || '-'}</td>
                 <td>${item.type || '-'}</td>
+                <td>${item.level || '-'}</td>
                 <td>${item.manager || '-'}</td>
-                <td>${item.phone || '-'}</td>
-                <td>${item.address || '-'}</td>
+                <td>${item.assistant || '-'}</td>
+                <td>${item.sales_area || '-'}</td>
+                <td>${item.tags || '-'}</td>
+                <td>${item.supplier || '-'}</td>
                 <td><span class="badge badge-success">${item.cooperation_status || '-'}</span></td>
+                <td>${item.phone || '-'}</td>
+                <td>${item.remark || '-'}</td>
+                <td>${item.visit_frequency || '-'}</td>
                 <td>${getStatusBadge(item.approval_status)}</td>
-                <td>${formatDate(item.created_at)}</td>
+                <td>${item.business_license || '-'}</td>
+                <td>${item.license_name || '-'}</td>
+                <td>${item.registration_no || '-'}</td>
+                <td>${formatDate(item.registration_date)}</td>
+                <td>${item.operator || '-'}</td>
+                <td>${item.receiver_name || '-'}</td>
+                <td>${item.receiver_phone || '-'}</td>
+                <td>${item.receiver_address || '-'}</td>
+                <td>${item.detail_address || '-'}</td>
+                <td>${item.contact_name || '-'}</td>
+                <td>${item.contact_phone || '-'}</td>
                 <td>
                     <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="viewDetail(${item.id})">查看</button>
                     <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="deleteItem(${item.id})">删除</button>
@@ -184,11 +344,10 @@
         e.preventDefault();
         
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
         
         const result = await fetchAPI('/customer/api/terminal/create', {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: formData
         });
         
         if (result && result.success) {
@@ -214,6 +373,19 @@
     function searchCustomers() {
         clearTimeout(window.searchTimeout);
         window.searchTimeout = setTimeout(() => loadData(1), 500);
+    }
+    
+    function previewImage(input) {
+        const preview = document.getElementById('license-preview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = '<img src="' + e.target.result + '" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;">';
+            };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            preview.innerHTML = '';
+        }
     }
     
     // 初始加载

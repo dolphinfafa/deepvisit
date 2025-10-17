@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}创建活动上报{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">创建活动上报</h3>
+                        <a href="{{ url_for('activity.reports') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 返回上报记录
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="activity_id">选择活动 <span class="text-danger">*</span></label>
+                            <select class="form-control" id="activity_id" name="activity_id" required>
+                                <option value="">请选择活动</option>
+                                {% for activity in activities %}
+                                <option value="{{ activity.id }}">{{ activity.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_type">客户类型</label>
+                            <select class="form-control" id="customer_type" name="customer_type" onchange="loadCustomers()">
+                                <option value="">请选择客户类型</option>
+                                <option value="terminal">终端客户</option>
+                                <option value="distributor">直营商</option>
+                                <option value="kol">KOL</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_id">选择客户</label>
+                            <select class="form-control" id="customer_id" name="customer_id">
+                                <option value="">请先选择客户类型</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_name">参与客户名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="display_photo">活动陈列照片</label>
+                            <input type="file" class="form-control-file" id="display_photo" name="display_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="location_photo">门店定位照片</label>
+                            <input type="file" class="form-control-file" id="location_photo" name="location_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="payment_photo">活动兑付照片</label>
+                            <input type="file" class="form-control-file" id="payment_photo" name="payment_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="remark">备注</label>
+                            <textarea class="form-control" id="remark" name="remark" rows="3" 
+                                      placeholder="请输入备注信息..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 创建上报
+                            </button>
+                            <a href="{{ url_for('activity.reports') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> 取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadCustomers() {
+    const customerType = document.getElementById('customer_type').value;
+    const customerSelect = document.getElementById('customer_id');
+    
+    if (!customerType) {
+        customerSelect.innerHTML = '<option value="">请先选择客户类型</option>';
+        return;
+    }
+    
+    fetch(`{{ url_for('activity.get_customers') }}?type=${customerType}`)
+        .then(response => response.json())
+        .then(data => {
+            customerSelect.innerHTML = '<option value="">请选择客户</option>';
+            data.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = customer.name;
+                customerSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            customerSelect.innerHTML = '<option value="">加载失败</option>';
+        });
+}
+
+// 当选择客户时，自动填充客户名称
+document.getElementById('customer_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        document.getElementById('customer_name').value = selectedOption.textContent;
+    }
+});
+</script>
+{% endblock %}

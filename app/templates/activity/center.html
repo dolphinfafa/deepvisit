@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}活动中心{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">活动中心</h3>
+                        <a href="{{ url_for('activity.create_activity') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 创建活动
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>活动ID</th>
+                                    <th>活动名称</th>
+                                    <th>活动描述</th>
+                                    <th>参与客户数</th>
+                                    <th>创建人</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in activities %}
+                                <tr>
+                                    <td>{{ activity.id }}</td>
+                                    <td>{{ activity.name }}</td>
+                                    <td>{{ activity.description[:50] }}{% if activity.description|length > 50 %}...{% endif %}</td>
+                                    <td>
+                                        <span class="badge badge-info">{{ activity.participant_count }}</span>
+                                    </td>
+                                    <td>{{ activity.created_by }}</td>
+                                    <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') if activity.created_at else '' }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('activity.edit_activity', activity_id=activity.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> 编辑
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteActivity({{ activity.id }})">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">暂无活动数据</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                确定要删除这个活动吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteActivity(activityId) {
+    $('#deleteForm').attr('action', '{{ url_for("activity.delete_activity", activity_id=0) }}'.replace('0', activityId));
+    $('#deleteModal').modal('show');
+}
+</script>
+{% endblock %}

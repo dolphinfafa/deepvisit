@@ -10,28 +10,41 @@
 
 <div class="content-box">
     <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="搜索KOL名称、编号..." onkeyup="searchCustomers()">
+        <input type="text" id="searchInput" placeholder="搜索KOL姓名、编码、电话、职业..." onkeyup="searchCustomers()">
         <button class="btn btn-success" onclick="loadData()">查询</button>
     </div>
     
-    <table class="table">
+    <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th>编号</th>
-                <th>姓名</th>
+                <th>KOL编码</th>
+                <th>KOL姓名</th>
+                <th>消费者类型</th>
+                <th>性别</th>
                 <th>电话</th>
-                <th>所在单位</th>
-                <th>职业/职务</th>
-                <th>KOL等级</th>
-                <th>客户经理</th>
+                <th>年龄段</th>
+                <th>KOL标签</th>
+                <th>生日</th>
+                <th>所在地</th>
+                <th>职业</th>
+                <th>饮酒频率</th>
+                <th>用酒场景</th>
                 <th>合作状态</th>
-                <th>创建时间</th>
+                <th>客户经理</th>
+                <th>标注位置</th>
+                <th>省</th>
+                <th>市</th>
+                <th>区</th>
+                <th>详细地址</th>
+                <th>收货人姓名</th>
+                <th>收货人手机</th>
+                <th>收货地址</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <tr>
-                <td colspan="10" style="text-align: center; padding: 40px;">加载中...</td>
+                <td colspan="23" style="text-align: center; padding: 40px;">加载中...</td>
             </tr>
         </tbody>
     </table>
@@ -40,28 +53,133 @@
 </div>
 
 <div class="modal" id="createModal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
         <h3>新增KOL客户</h3>
         <form id="createForm">
-            <div class="form-group">
-                <label>KOL编码 *</label>
-                <input type="text" name="code" required>
-            </div>
-            <div class="form-group">
-                <label>姓名 *</label>
-                <input type="text" name="name" required>
-            </div>
-            <div class="form-group">
-                <label>电话</label>
-                <input type="text" name="phone">
-            </div>
-            <div class="form-group">
-                <label>所在单位</label>
-                <input type="text" name="company">
-            </div>
-            <div class="form-group">
-                <label>职业/职务</label>
-                <input type="text" name="profession">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <!-- 基本信息 -->
+                <div class="form-group">
+                    <label>KOL编码 *</label>
+                    <input type="text" name="code" required>
+                </div>
+                <div class="form-group">
+                    <label>KOL姓名 *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>消费者类型</label>
+                    <select name="consumer_type">
+                        <option value="个人消费者">个人消费者</option>
+                        <option value="企业消费者">企业消费者</option>
+                        <option value="代理商">代理商</option>
+                        <option value="经销商">经销商</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>性别</label>
+                    <select name="gender">
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>电话</label>
+                    <input type="text" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>年龄段</label>
+                    <select name="age_group">
+                        <option value="18-25">18-25</option>
+                        <option value="26-35">26-35</option>
+                        <option value="36-45">36-45</option>
+                        <option value="46-55">46-55</option>
+                        <option value="55+">55+</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>KOL标签</label>
+                    <input type="text" name="kol_tags" placeholder="多个标签用逗号分隔">
+                </div>
+                <div class="form-group">
+                    <label>生日</label>
+                    <input type="date" name="birthday">
+                </div>
+                <div class="form-group">
+                    <label>所在地</label>
+                    <input type="text" name="location">
+                </div>
+                <div class="form-group">
+                    <label>职业</label>
+                    <input type="text" name="profession">
+                </div>
+                <div class="form-group">
+                    <label>饮酒频率</label>
+                    <select name="drinking_frequency">
+                        <option value="每天">每天</option>
+                        <option value="每周">每周</option>
+                        <option value="每月">每月</option>
+                        <option value="偶尔">偶尔</option>
+                        <option value="不饮酒">不饮酒</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>用酒场景</label>
+                    <select name="drinking_scene">
+                        <option value="商务宴请">商务宴请</option>
+                        <option value="家庭聚会">家庭聚会</option>
+                        <option value="朋友聚餐">朋友聚餐</option>
+                        <option value="节日庆祝">节日庆祝</option>
+                        <option value="个人品鉴">个人品鉴</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>合作状态</label>
+                    <select name="cooperation_status">
+                        <option value="合作中">合作中</option>
+                        <option value="暂停合作">暂停合作</option>
+                        <option value="终止合作">终止合作</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>客户经理</label>
+                    <input type="text" name="manager_id">
+                </div>
+                <div class="form-group">
+                    <label>标注位置</label>
+                    <input type="text" name="position_note">
+                </div>
+                
+                <!-- 地址信息 -->
+                <div class="form-group">
+                    <label>省</label>
+                    <input type="text" name="province">
+                </div>
+                <div class="form-group">
+                    <label>市</label>
+                    <input type="text" name="city">
+                </div>
+                <div class="form-group">
+                    <label>区</label>
+                    <input type="text" name="district">
+                </div>
+                <div class="form-group">
+                    <label>详细地址</label>
+                    <input type="text" name="detail_address">
+                </div>
+                
+                <!-- 收货信息 -->
+                <div class="form-group">
+                    <label>收货人姓名</label>
+                    <input type="text" name="receiver_name">
+                </div>
+                <div class="form-group">
+                    <label>收货人手机</label>
+                    <input type="text" name="receiver_phone">
+                </div>
+                <div class="form-group">
+                    <label>收货地址</label>
+                    <input type="text" name="receiver_address">
+                </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button type="submit" class="btn btn-primary">保存</button>
@@ -92,21 +210,34 @@
         const tbody = document.getElementById('tableBody');
         
         if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="23" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
             return;
         }
         
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td>${item.code}</td>
-                <td>${item.name}</td>
+                <td>${item.code || '-'}</td>
+                <td>${item.name || '-'}</td>
+                <td>${item.consumer_type || '-'}</td>
+                <td>${item.gender || '-'}</td>
                 <td>${item.phone || '-'}</td>
-                <td>${item.company || '-'}</td>
+                <td>${item.age_group || '-'}</td>
+                <td>${item.kol_tags || '-'}</td>
+                <td>${formatDate(item.birthday)}</td>
+                <td>${item.location || '-'}</td>
                 <td>${item.profession || '-'}</td>
-                <td>${item.kol_level || '-'}</td>
-                <td>${item.manager || '-'}</td>
+                <td>${item.drinking_frequency || '-'}</td>
+                <td>${item.drinking_scene || '-'}</td>
                 <td><span class="badge badge-success">${item.cooperation_status || '-'}</span></td>
-                <td>${formatDate(item.created_at)}</td>
+                <td>${item.manager || '-'}</td>
+                <td>${item.position_note || '-'}</td>
+                <td>${item.province || '-'}</td>
+                <td>${item.city || '-'}</td>
+                <td>${item.district || '-'}</td>
+                <td>${item.detail_address || '-'}</td>
+                <td>${item.receiver_name || '-'}</td>
+                <td>${item.receiver_phone || '-'}</td>
+                <td>${item.receiver_address || '-'}</td>
                 <td>
                     <button class="btn" style="padding: 5px 10px; font-size: 12px;">查看</button>
                 </td>
