@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}新增铺货上报{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>新增铺货上报</h2>
+    <div class="user-info">
+        <a href="{{ url_for('data_report.display_list') }}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+<div class="content-box">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        <div class="horizontal-layout">
+            <div class="form-group">
+                <label for="report_date">上报日期 <span style="color: red;">*</span></label>
+                <input type="date" class="form-control" id="report_date" name="report_date" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customer_type">客户类型</label>
+                <select class="form-control" id="customer_type" name="customer_type" onchange="loadCustomers()">
+                    <option value="">请选择</option>
+                    <option value="terminal">终端客户</option>
+                    <option value="distributor">直营商</option>
+                    <option value="kol">KOL</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="customer_name">客户名称 <span style="color: red;">*</span></label>
+                <select class="form-control" id="customer_name" name="customer_name" required>
+                    <option value="">请先选择客户类型</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="horizontal-layout">
+            <div class="form-group">
+                <label for="customer_level">客户等级</label>
+                <input type="text" class="form-control" id="customer_level" name="customer_level" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label for="customer_manager">客户经理</label>
+                <input type="text" class="form-control" id="customer_manager" name="customer_manager" readonly>
+            </div>
+        </div>
+        
+        <div class="horizontal-layout">
+            <div class="form-group">
+                <label for="product_code">商品 <span style="color: red;">*</span></label>
+                <select class="form-control" id="product_code" name="product_code" onchange="fillProductInfo()" required>
+                    <option value="">请选择商品</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="product_name">商品名称 <span style="color: red;">*</span></label>
+                <input type="text" class="form-control" id="product_name" name="product_name" readonly required>
+            </div>
+        </div>
+        
+        <div class="horizontal-layout">
+            <div class="form-group">
+                <label for="specification">规格</label>
+                <input type="text" class="form-control" id="specification" name="specification" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label for="product_type">商品类型</label>
+                <input type="text" class="form-control" id="product_type" name="product_type" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label for="brand">品牌</label>
+                <input type="text" class="form-control" id="brand" name="brand" readonly>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="remark">备注</label>
+            <textarea class="form-control" id="remark" name="remark" rows="3"></textarea>
+        </div>
+        
+        <div class="form-group" style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="margin-right: 10px;">提交</button>
+            <a href="{{ url_for('data_report.display_list') }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let products = [];
+let customers = [];
+
+// 页面加载时获取商品列表
+$(document).ready(function() {
+    loadProducts();
+    // 设置默认日期为今天
+    document.getElementById('report_date').valueAsDate = new Date();
+});
+
+function loadProducts() {
+    $.get('/data_report/api/products', function(data) {
+        products = data;
+        let select = $('#product_code');
+        select.empty();
+        select.append('<option value="">请选择商品</option>');
+        data.forEach(function(product) {
+            select.append(`<option value="${product.code}" 
+                data-name="${product.name}" 
+                data-spec="${product.specification || ''}" 
+                data-type="${product.type || ''}"
+                data-brand="${product.brand || ''}">${product.code} - ${product.name}</option>`);
+        });
+    });
+}
+
+function loadCustomers() {
+    const type = $('#customer_type').val();
+    if (!type) {
+        $('#customer_name').empty().append('<option value="">请先选择客户类型</option>');
+        return;
+    }
+    
+    $.get('/data_report/api/customers?type=' + type, function(data) {
+        customers = data;
+        let select = $('#customer_name');
+        select.empty();
+        select.append('<option value="">请选择客户</option>');
+        data.forEach(function(customer) {
+            select.append(`<option value="${customer.name}" 
+                data-level="${customer.level || ''}" 
+                data-manager="${customer.manager || ''}">${customer.name}</option>`);
+        });
+    });
+}
+
+$('#customer_name').change(function() {
+    const selected = $(this).find('option:selected');
+    $('#customer_level').val(selected.data('level') || '');
+    $('#customer_manager').val(selected.data('manager') || '');
+});
+
+function fillProductInfo() {
+    const selected = $('#product_code option:selected');
+    $('#product_name').val(selected.data('name') || '');
+    $('#specification').val(selected.data('spec') || '');
+    $('#product_type').val(selected.data('type') || '');
+    $('#brand').val(selected.data('brand') || '');
+}
+</script>
+{% endblock %}
+

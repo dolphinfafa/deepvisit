@@ -28,15 +28,18 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>订单编号</th>
-                    <th>订单状态</th>
+                    <th>订单号</th>
                     <th>客户名称</th>
-                    <th>收货地址</th>
+                    <th>商品名称</th>
+                    <th>规格</th>
+                    <th>订货价</th>
+                    <th>订单状态</th>
+                    <th>下单时间</th>
+                    <th>业务员</th>
+                    <th>订购数</th>
+                    <th>订购金额</th>
+                    <th>优惠后金额</th>
                     <th>发货仓库</th>
-                    <th>客户经理</th>
-                    <th>下单商品</th>
-                    <th>累积金额</th>
-                    <th>审批进度</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -117,25 +120,44 @@ function renderOrders(orders) {
     tbody.innerHTML = '';
     
     if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center">暂无数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="text-center">暂无数据</td></tr>';
         return;
     }
     
     orders.forEach(order => {
+        // 提取第一个商品信息
+        const firstItem = order.items && order.items.length > 0 ? order.items[0] : {};
+        const totalQuantity = order.items ? order.items.reduce((sum, item) => sum + (item.quantity || 0), 0) : 0;
+        const originalAmount = order.original_amount || order.total_amount || 0;
+        const finalAmount = order.final_amount || order.total_amount || 0;
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${order.order_no}</td>
-            <td>${getStatusBadge(order.status)}</td>
             <td>${order.customer_name || '-'}</td>
-            <td>${order.receiver_address || '-'}</td>
-            <td>${order.warehouse || '-'}</td>
+            <td>${firstItem.product_name || '-'}${order.items && order.items.length > 1 ? ' 等' + order.items.length + '项' : ''}</td>
+            <td>${firstItem.specification || '-'}</td>
+            <td>¥${(firstItem.price || 0).toFixed(2)}</td>
+            <td>${getStatusBadge(order.status)}</td>
+            <td>${formatDateTime(order.order_date || order.created_at)}</td>
             <td>${order.salesman || '-'}</td>
-            <td>${getOrderItems(order.items)}</td>
-            <td>¥${order.final_amount.toFixed(2)}</td>
-            <td>${getApprovalStatus(order)}</td>
+            <td>${totalQuantity}</td>
+            <td>¥${originalAmount.toFixed(2)}</td>
+            <td>¥${finalAmount.toFixed(2)}</td>
+            <td>${order.warehouse || '-'}</td>
             <td>${getActionButtons(order)}</td>
         `;
         tbody.appendChild(row);
+    });
+}
+
+// 格式化日期时间
+function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
     });
 }
 
@@ -176,14 +198,7 @@ function getActionButtons(order) {
     let buttons = '';
     
     // 查看详情
-    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})" style="padding: 8px 16px; font-size: 14px;">查看</button>`;
-    
-    // 根据状态显示不同操作
-    if (order.status === 'draft') {
-        buttons += `<button class="btn btn-sm btn-warning" onclick="submitOrder(${order.id})" style="padding: 8px 16px; font-size: 14px;">提交</button>`;
-    } else if (order.status === 'pending') {
-        buttons += `<button class="btn btn-sm btn-success" onclick="showApprovalModal(${order.id})" style="padding: 8px 16px; font-size: 14px;">审批</button>`;
-    }
+    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})" style="padding: 8px 16px; font-size: 14px;">详情</button>`;
     
     return buttons;
 }

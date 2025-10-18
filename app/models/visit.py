@@ -10,6 +10,7 @@ class VisitPlan(db.Model):
     customer_type = db.Column(db.String(32), nullable=False)  # 客户类型
     customer_id = db.Column(db.Integer, nullable=False)  # 客户ID
     customer_name = db.Column(db.String(128))  # 客户名称
+    customer_code = db.Column(db.String(64))  # 客户编码
     visit_date = db.Column(db.Date, nullable=False)  # 拜访日期
     start_time = db.Column(db.Time)  # 开始时间
     end_time = db.Column(db.Time)  # 结束时间
@@ -18,22 +19,31 @@ class VisitPlan(db.Model):
     period_type = db.Column(db.String(32))  # 周期类型: daily/weekly/monthly
     status = db.Column(db.String(32), default='pending')  # pending/approved/rejected/completed
     approval_status = db.Column(db.String(32), default='pending')  # 审批状态
+    route_name = db.Column(db.String(128))  # 所属路线
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     visitor = db.relationship('User', foreign_keys=[visitor_id], backref='visit_plans', lazy='select')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_visit_plans', lazy='select')
     
     def to_dict(self):
         return {
             'id': self.id,
             'visitor': self.visitor.name if self.visitor else None,
+            'visitor_account': self.visitor.username if self.visitor else None,
             'customer_name': self.customer_name,
+            'customer_code': self.customer_code,
             'visit_date': self.visit_date.isoformat() if self.visit_date else None,
             'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
             'plan_content': self.plan_content,
+            'is_periodic': self.is_periodic,
+            'period_type': self.period_type,
             'status': self.status,
             'approval_status': self.approval_status,
+            'route_name': self.route_name,
+            'creator': self.creator.name if self.creator else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -98,8 +108,10 @@ class VisitRecord(db.Model):
     customer_id = db.Column(db.Integer, nullable=False)
     customer_name = db.Column(db.String(128))
     customer_address = db.Column(db.String(255))  # 客户地址
+    customer_manager = db.Column(db.String(64))  # 客户经理
     visit_frequency = db.Column(db.String(32))  # 拜访频率
     visit_type = db.Column(db.String(32))  # planned/temporary
+    status = db.Column(db.String(32), default='completed')  # 完成状态
     
     # 拜访内容
     visit_content = db.Column(db.Text)  # 拜访内容
@@ -109,12 +121,14 @@ class VisitRecord(db.Model):
     checkin_latitude = db.Column(db.Float)  # 签到纬度
     checkin_longitude = db.Column(db.Float)  # 签到经度
     checkin_address = db.Column(db.String(255))  # 签到地点
+    checkin_distance_deviation = db.Column(db.Float)  # 抵达距离偏差
     
     # 离开签到
     checkout_time = db.Column(db.DateTime)  # 签退时间
     checkout_latitude = db.Column(db.Float)
     checkout_longitude = db.Column(db.Float)
     checkout_address = db.Column(db.String(255))  # 签退地点
+    checkout_distance_deviation = db.Column(db.Float)  # 离开距离偏差
     
     # 铺货上报
     product_distribution_list = db.Column(db.Text)  # JSON格式存储商品铺货清单
@@ -171,16 +185,21 @@ class VisitRecord(db.Model):
         return {
             'id': self.id,
             'visitor': self.visitor.name if self.visitor else None,
+            'visitor_account': self.visitor.username if self.visitor else None,
             'visitor_id': self.visitor_id,
             'customer_name': self.customer_name,
             'customer_address': self.customer_address,
+            'customer_manager': self.customer_manager,
             'visit_frequency': self.visit_frequency,
             'visit_type': self.visit_type,
             'visit_content': self.visit_content,
+            'status': self.status,
             'checkin_time': self.checkin_time.isoformat() if self.checkin_time else None,
             'checkin_address': self.checkin_address,
+            'checkin_distance_deviation': self.checkin_distance_deviation,
             'checkout_time': self.checkout_time.isoformat() if self.checkout_time else None,
             'checkout_address': self.checkout_address,
+            'checkout_distance_deviation': self.checkout_distance_deviation,
             'product_distribution_list': product_distribution_list,
             'distribution_photos': distribution_photos,
             'distribution_remark': self.distribution_remark,

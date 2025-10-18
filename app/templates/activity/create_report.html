@@ -17,57 +17,133 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" enctype="multipart/form-data">
+                        <!-- 1. 选择活动 -->
                         <div class="form-group">
                             <label for="activity_id">选择活动 <span class="text-danger">*</span></label>
                             <select class="form-control" id="activity_id" name="activity_id" required>
                                 <option value="">请选择活动</option>
                                 {% for activity in activities %}
-                                <option value="{{ activity.id }}">{{ activity.name }}</option>
+                                <option value="{{ activity.id }}" 
+                                        data-code="{{ activity.activity_code }}"
+                                        data-start="{{ activity.execution_start_date }}"
+                                        data-end="{{ activity.execution_end_date }}">
+                                    {{ activity.name }} ({{ activity.activity_code }})
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="customer_type">客户类型</label>
-                            <select class="form-control" id="customer_type" name="customer_type" onchange="loadCustomers()">
-                                <option value="">请选择客户类型</option>
-                                <option value="terminal">终端客户</option>
-                                <option value="distributor">直营商</option>
-                                <option value="kol">KOL</option>
-                            </select>
+                        <!-- 2. 选择客户 -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">客户信息</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_type">客户类型</label>
+                                            <select class="form-control" id="customer_type" name="customer_type" onchange="loadCustomers()">
+                                                <option value="">请选择客户类型</option>
+                                                <option value="terminal">终端客户</option>
+                                                <option value="distributor">直营商</option>
+                                                <option value="kol">KOL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_id">选择客户</label>
+                                            <select class="form-control" id="customer_id" name="customer_id">
+                                                <option value="">请先选择客户类型</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_name">客户名称 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_code">客户编码</label>
+                                            <input type="text" class="form-control" id="customer_code" name="customer_code">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="address">详细地址</label>
+                                    <input type="text" class="form-control" id="address" name="address">
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="account_manager">客户经理</label>
+                                            <input type="text" class="form-control" id="account_manager" name="account_manager">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="application_no">申请单号</label>
+                                            <input type="text" class="form-control" id="application_no" name="application_no">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
+                        <!-- 3. 上传门店照片 -->
                         <div class="form-group">
-                            <label for="customer_id">选择客户</label>
-                            <select class="form-control" id="customer_id" name="customer_id">
-                                <option value="">请先选择客户类型</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="customer_name">参与客户名称 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="display_photo">活动陈列照片</label>
-                            <input type="file" class="form-control-file" id="display_photo" name="display_photo" 
-                                   accept="image/*">
-                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="location_photo">门店定位照片</label>
+                            <label for="location_photo">上传门店照片</label>
                             <input type="file" class="form-control-file" id="location_photo" name="location_photo" 
                                    accept="image/*">
                             <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
                         </div>
                         
+                        <!-- 4. 上传兑付照片 -->
                         <div class="form-group">
-                            <label for="payment_photo">活动兑付照片</label>
+                            <label for="payment_photo">上传兑付照片</label>
                             <input type="file" class="form-control-file" id="payment_photo" name="payment_photo" 
                                    accept="image/*">
                             <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
+                        </div>
+                        
+                        <!-- 5. 上传活动陈列照片 -->
+                        <div class="form-group">
+                            <label for="display_photo">上传活动陈列照片</label>
+                            <input type="file" class="form-control-file" id="display_photo" name="display_photo" 
+                                   accept="image/*">
+                            <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
+                        </div>
+                        
+                        <!-- 6. 客户签收 -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">客户签收</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="signature_method">签收方式</label>
+                                    <select class="form-control" id="signature_method" name="signature_method">
+                                        <option value="">请选择签收方式</option>
+                                        <option value="手写签收">手写签收</option>
+                                        <option value="拍照签收">拍照签收</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="signature_photo">签收照片</label>
+                                    <input type="file" class="form-control-file" id="signature_photo" name="signature_photo" 
+                                           accept="image/*">
+                                    <small class="form-text text-muted">支持 JPG、PNG、GIF 格式</small>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-group">

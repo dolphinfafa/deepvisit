@@ -42,11 +42,14 @@
                         <table class="table" id="planTable">
                             <thead>
                                 <tr>
-                                    <th>拜访人</th>
-                                    <th>拜访客户</th>
                                     <th>拜访日期</th>
-                                    <th>拜访内容</th>
-                                    <th>审批进度</th>
+                                    <th>拜访人</th>
+                                    <th>拜访人账号</th>
+                                    <th>客户名称</th>
+                                    <th>所属路线</th>
+                                    <th>客户编码</th>
+                                    <th>拜访状态</th>
+                                    <th>创建人</th>
                                     <th>创建时间</th>
                                     <th>操作</th>
                                 </tr>
@@ -185,6 +188,13 @@ $(document).ready(function() {
         e.preventDefault();
         createPlan();
     });
+    
+    // 模态框关闭时重置表单和按钮状态
+    $('#addPlanModal').on('hidden.bs.modal', function() {
+        $('#addPlanForm')[0].reset();
+        const submitBtn = $('#addPlanForm button[type="submit"]');
+        submitBtn.prop('disabled', false).text('保存');
+    });
 });
 
 // 加载用户列表
@@ -230,31 +240,44 @@ function renderPlanTable(data) {
     tbody.empty();
     
     if (data.length === 0) {
-        tbody.append('<tr><td colspan="7" class="text-center">暂无数据</td></tr>');
+        tbody.append('<tr><td colspan="10" class="text-center">暂无数据</td></tr>');
         return;
     }
     
     data.forEach(plan => {
-        const approvalStatusBadge = getApprovalStatusBadge(plan.approval_status);
+        const visitStatusBadge = getVisitStatusBadge(plan.visit_status || 'pending');
         const visitDate = plan.visit_date ? new Date(plan.visit_date).toLocaleDateString() : '-';
         const createdDate = plan.created_at ? new Date(plan.created_at).toLocaleDateString() : '-';
         
         tbody.append(`
             <tr>
-                <td>${plan.visitor || '-'}</td>
-                <td>${plan.customer_name || '-'}</td>
                 <td>${visitDate}</td>
-                <td>${plan.plan_content || '-'}</td>
-                <td>${approvalStatusBadge}</td>
+                <td>${plan.visitor || '-'}</td>
+                <td>${plan.visitor_account || '-'}</td>
+                <td>${plan.customer_name || '-'}</td>
+                <td>${plan.route_name || '-'}</td>
+                <td>${plan.customer_code || '-'}</td>
+                <td>${visitStatusBadge}</td>
+                <td>${plan.creator || '-'}</td>
                 <td>${createdDate}</td>
                 <td>
                     <button class="btn btn-sm btn-info" onclick="viewPlan(${plan.id})" style="padding: 8px 16px; font-size: 14px;">
-                        <i class="fas fa-eye"></i> 查看
+                        <i class="fas fa-eye"></i> 详情
                     </button>
                 </td>
             </tr>
         `);
     });
+}
+
+// 获取拜访状态标签
+function getVisitStatusBadge(status) {
+    const statusMap = {
+        'pending': '<span class="badge badge-warning">待拜访</span>',
+        'completed': '<span class="badge badge-success">已完成</span>',
+        'cancelled': '<span class="badge badge-danger">已取消</span>'
+    };
+    return statusMap[status] || '<span class="badge badge-secondary">未知</span>';
 }
 
 // 获取审批状态标签
@@ -302,17 +325,47 @@ function updatePagination(total, currentPage) {
 
 // 创建拜访计划
 function createPlan() {
+    // 验证表单
+    if (!$('#visitorSelect').val()) {
+        showAlert('请选择拜访人', 'error');
+        return;
+    }
+    if (!$('#customerType').val()) {
+        showAlert('请选择客户类型', 'error');
+        return;
+    }
+    if (!$('#customerId').val()) {
+        showAlert('请输入客户ID', 'error');
+        return;
+    }
+    if (!$('#customerName').val()) {
+        showAlert('请输入客户名称', 'error');
+        return;
+    }
+    if (!$('#visitDate').val()) {
+        showAlert('请选择拜访日期', 'error');
+        return;
+    }
+    if (!$('#planContent').val()) {
+        showAlert('请输入拜访内容', 'error');
+        return;
+    }
+    
     const formData = {
         visitor_id: $('#visitorSelect').val(),
         customer_type: $('#customerType').val(),
         customer_id: $('#customerId').val(),
         customer_name: $('#customerName').val(),
         visit_date: $('#visitDate').val(),
-        start_time: $('#startTime').val(),
-        end_time: $('#endTime').val(),
+        start_time: $('#startTime').val() || null,
+        end_time: $('#endTime').val() || null,
         plan_content: $('#planContent').val(),
         is_periodic: $('#isPeriodic').is(':checked')
     };
+    
+    // 禁用提交按钮，防止重复提交
+    const submitBtn = $('#addPlanForm button[type="submit"]');
+    submitBtn.prop('disabled', true).text('提交中...');
     
     $.ajax({
         url: '/visit/api/plan/create',
@@ -320,6 +373,7 @@ function createPlan() {
         contentType: 'application/json',
         data: JSON.stringify(formData),
         success: function(response) {
+            submitBtn.prop('disabled', false).text('保存');
             if (response.success) {
                 showAlert('创建成功', 'success');
                 $('#addPlanModal').modal('hide');
@@ -329,8 +383,16 @@ function createPlan() {
                 showAlert(response.message || '创建失败', 'error');
             }
         },
-        error: function() {
-            showAlert('创建失败', 'error');
+        error: function(xhr, status, error) {
+            submitBtn.prop('disabled', false).text('保存');
+            let errorMsg = '创建失败';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            } else if (xhr.statusText) {
+                errorMsg = '创建失败：' + xhr.statusText;
+            }
+            showAlert(errorMsg, 'error');
+            console.error('Error:', xhr, status, error);
         }
     });
 }

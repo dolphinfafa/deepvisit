@@ -674,3 +674,22 @@ def upload_delivery_voucher():
     except Exception as e:
         return jsonify({'success': False, 'message': f'上传失败: {str(e)}'})
 
+# ========== 订单详情页面 ==========
+@bp.route('/sales/<int:id>')
+@login_required
+def sales_detail(id):
+    """销售订单详情页面"""
+    return render_template('order/sales_detail.html', id=id)
+
+@bp.route('/return/<int:id>')
+@login_required
+def return_detail(id):
+    """退货订单详情页面"""
+    return render_template('order/return_detail.html', id=id)
+
+@bp.route('/delivery/<int:id>')
+@login_required
+def delivery_detail(id):
+    """发货订单详情页面"""
+    return render_template('order/delivery_detail.html', id=id)
+

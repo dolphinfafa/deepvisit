@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}库存上报{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>库存上报</h2>
+    <div class="user-info">
+        <a href="{{ url_for('data_report.create_inventory') }}" class="btn btn-primary">+ 新增上报</a>
+    </div>
+</div>
+
+<div class="content-box">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>客户名称</th>
+                    <th>商品名称</th>
+                    <th>规格</th>
+                    <th>商品编码</th>
+                    <th>库存数量</th>
+                    <th>备注</th>
+                    <th>上报人</th>
+                    <th>上报时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.customer_name }}</td>
+                    <td>{{ report.product_name }}</td>
+                    <td>{{ report.specification or '-' }}</td>
+                    <td>{{ report.product_code or '-' }}</td>
+                    <td><strong>{{ report.quantity }}</strong></td>
+                    <td>{{ report.remark or '-' }}</td>
+                    <td>{{ report.reporter.name if report.reporter else '-' }}</td>
+                    <td>{{ report.report_time.strftime('%Y-%m-%d %H:%M') if report.report_time else '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('data_report.edit_inventory', report_id=report.id) }}" 
+                           class="btn btn-sm btn-primary" style="padding: 6px 12px; font-size: 13px;">编辑</a>
+                        <button onclick="deleteReport({{ report.id }})" 
+                                class="btn btn-sm btn-danger" style="padding: 6px 12px; font-size: 13px;">删除</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; color: #999;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                确定要删除这条库存上报记录吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteReport(reportId) {
+    $('#deleteForm').attr('action', '/data_report/inventory/' + reportId + '/delete');
+    $('#deleteModal').modal('show');
+}
+</script>
+{% endblock %}
+

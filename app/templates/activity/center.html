@@ -20,26 +20,62 @@
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>活动ID</th>
+                                    <th>活动状态</th>
                                     <th>活动名称</th>
-                                    <th>活动描述</th>
-                                    <th>参与客户数</th>
+                                    <th>活动编码</th>
+                                    <th>活动类型</th>
+                                    <th>执行周期</th>
+                                    <th>活动申请周期</th>
+                                    <th>参与客户范围</th>
+                                    <th>客户申请数</th>
+                                    <th>客户参与数</th>
                                     <th>创建人</th>
-                                    <th>创建时间</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for activity in activities %}
                                 <tr>
-                                    <td>{{ activity.id }}</td>
-                                    <td>{{ activity.name }}</td>
-                                    <td>{{ activity.description[:50] }}{% if activity.description|length > 50 %}...{% endif %}</td>
                                     <td>
-                                        <span class="badge badge-info">{{ activity.participant_count }}</span>
+                                        {% if activity.status == 'active' %}
+                                            <span class="badge badge-success">活跃</span>
+                                        {% elif activity.status == 'inactive' %}
+                                            <span class="badge badge-secondary">非活跃</span>
+                                        {% elif activity.status == 'draft' %}
+                                            <span class="badge badge-warning">草稿</span>
+                                        {% else %}
+                                            <span class="badge badge-info">{{ activity.status }}</span>
+                                        {% endif %}
                                     </td>
-                                    <td>{{ activity.created_by }}</td>
-                                    <td>{{ activity.created_at.strftime('%Y-%m-%d %H:%M') if activity.created_at else '' }}</td>
+                                    <td>{{ activity.name }}</td>
+                                    <td>{{ activity.activity_code }}</td>
+                                    <td>{{ activity.activity_type or '-' }}</td>
+                                    <td>
+                                        {% if activity.execution_start_date and activity.execution_end_date %}
+                                            {{ activity.execution_start_date.strftime('%Y-%m-%d') }} 至 {{ activity.execution_end_date.strftime('%Y-%m-%d') }}
+                                        {% elif activity.execution_start_date %}
+                                            {{ activity.execution_start_date.strftime('%Y-%m-%d') }} 起
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if activity.application_start_date and activity.application_end_date %}
+                                            {{ activity.application_start_date.strftime('%Y-%m-%d') }} 至 {{ activity.application_end_date.strftime('%Y-%m-%d') }}
+                                        {% elif activity.application_start_date %}
+                                            {{ activity.application_start_date.strftime('%Y-%m-%d') }} 起
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ activity.customer_scope or '-' }}</td>
+                                    <td>
+                                        <span class="badge badge-primary">{{ activity.applications.count() }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">{{ activity.reports.count() }}</span>
+                                    </td>
+                                    <td>{{ activity.creator.name if activity.creator else '-' }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('activity.edit_activity', activity_id=activity.id) }}" 
@@ -55,7 +91,7 @@
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">暂无活动数据</td>
+                                    <td colspan="11" class="text-center text-muted">暂无活动数据</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

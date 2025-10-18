@@ -251,7 +251,8 @@
             border-color: #3498db;
         }
         
-        .modal {
+        /* 自定义模态框样式（不与Bootstrap冲突） */
+        .custom-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -264,11 +265,11 @@
             align-items: center;
         }
         
-        .modal.show {
+        .custom-modal.show {
             display: flex;
         }
         
-        .modal-content {
+        .custom-modal-content {
             background: white;
             padding: 32px;
             border-radius: 8px;
@@ -464,6 +465,11 @@
                 <a href="{{ url_for('activity.index') }}" class="menu-item">🎯 活动管理</a>
                 <a href="{{ url_for('activity.center') }}" class="menu-item">📅 活动中心</a>
                 <a href="{{ url_for('activity.reports') }}" class="menu-item">📋 活动上报记录</a>
+                
+                <div style="padding: 10px 20px; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 10px;">数据上报</div>
+                <a href="{{ url_for('data_report.display_list') }}" class="menu-item">📦 铺货上报</a>
+                <a href="{{ url_for('data_report.inventory_list') }}" class="menu-item">📊 库存上报</a>
+                <a href="{{ url_for('data_report.competitor_list') }}" class="menu-item">🏆 竞品上报</a>
                 
                 <div style="padding: 10px 20px; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 10px;">系统管理</div>
                 <a href="{{ url_for('system.user_list') }}" class="menu-item">👥 员工管理</a>

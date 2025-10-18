@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app import db
-from app.models.activity import Activity, ActivityReport
+from app.models.activity import Activity, ActivityReport, ActivityApplication
 from app.models.customer import Terminal, DirectDistributor, KOL
 from werkzeug.utils import secure_filename
 import os
@@ -39,7 +39,8 @@ def index():
 @login_required
 def center():
     """活动中心"""
-    activities = Activity.query.filter_by(status='active').order_by(Activity.created_at.desc()).all()
+    # 显示所有活动（包括草稿、活跃、非活跃）
+    activities = Activity.query.order_by(Activity.created_at.desc()).all()
     return render_template('activity/center.html', activities=activities)
 
 @bp.route('/center/create', methods=['GET', 'POST'])
@@ -49,15 +50,38 @@ def create_activity():
     if request.method == 'POST':
         try:
             name = request.form.get('name')
+            activity_type = request.form.get('activity_type')
             description = request.form.get('description')
             
-            if not name:
-                flash('活动名称不能为空', 'error')
+            if not name or not activity_type:
+                flash('活动名称和活动类型不能为空', 'error')
                 return render_template('activity/create_activity.html')
+            
+            # 处理日期字段
+            execution_start_date = request.form.get('execution_start_date')
+            execution_end_date = request.form.get('execution_end_date')
+            application_start_date = request.form.get('application_start_date')
+            application_end_date = request.form.get('application_end_date')
+            
+            # 处理费用分摊比例
+            cost_share_ratio = request.form.get('cost_share_ratio')
+            cost_share_ratio = float(cost_share_ratio) if cost_share_ratio else None
             
             activity = Activity(
                 name=name,
+                activity_type=activity_type,
+                execution_start_date=execution_start_date if execution_start_date else None,
+                execution_end_date=execution_end_date if execution_end_date else None,
                 description=description,
+                require_application=request.form.get('require_application'),
+                customer_scope=request.form.get('customer_scope'),
+                product_scope=request.form.get('product_scope'),
+                payment_method=request.form.get('payment_method'),
+                settlement_method=request.form.get('settlement_method'),
+                application_start_date=application_start_date if application_start_date else None,
+                application_end_date=application_end_date if application_end_date else None,
+                cost_share_ratio=cost_share_ratio,
+                customer_signature=request.form.get('customer_signature'),
                 created_by=current_user.id
             )
             
@@ -83,7 +107,31 @@ def edit_activity(activity_id):
     if request.method == 'POST':
         try:
             activity.name = request.form.get('name')
+            activity.activity_type = request.form.get('activity_type')
             activity.description = request.form.get('description')
+            
+            # 处理日期字段
+            execution_start_date = request.form.get('execution_start_date')
+            execution_end_date = request.form.get('execution_end_date')
+            application_start_date = request.form.get('application_start_date')
+            application_end_date = request.form.get('application_end_date')
+            
+            activity.execution_start_date = execution_start_date if execution_start_date else None
+            activity.execution_end_date = execution_end_date if execution_end_date else None
+            activity.application_start_date = application_start_date if application_start_date else None
+            activity.application_end_date = application_end_date if application_end_date else None
+            
+            # 处理费用分摊比例
+            cost_share_ratio = request.form.get('cost_share_ratio')
+            activity.cost_share_ratio = float(cost_share_ratio) if cost_share_ratio else None
+            
+            # 更新其他字段
+            activity.require_application = request.form.get('require_application')
+            activity.customer_scope = request.form.get('customer_scope')
+            activity.product_scope = request.form.get('product_scope')
+            activity.payment_method = request.form.get('payment_method')
+            activity.settlement_method = request.form.get('settlement_method')
+            activity.customer_signature = request.form.get('customer_signature')
             activity.status = request.form.get('status', 'active')
             
             db.session.commit()
@@ -132,19 +180,25 @@ def create_report():
     if request.method == 'POST':
         try:
             activity_id = request.form.get('activity_id')
+            application_no = request.form.get('application_no')
             customer_name = request.form.get('customer_name')
+            customer_code = request.form.get('customer_code')
             customer_type = request.form.get('customer_type')
             customer_id = request.form.get('customer_id')
+            address = request.form.get('address')
+            account_manager = request.form.get('account_manager')
+            signature_method = request.form.get('signature_method')
             remark = request.form.get('remark')
             
             if not activity_id or not customer_name:
-                flash('活动ID和客户名称不能为空', 'error')
+                flash('活动和客户名称不能为空', 'error')
                 return render_template('activity/create_report.html', activities=Activity.query.filter_by(status='active').all())
             
             # 处理文件上传
             display_photo = None
             location_photo = None
             payment_photo = None
+            signature_photo = None
             
             if 'display_photo' in request.files:
                 file = request.files['display_photo']
@@ -158,14 +212,24 @@ def create_report():
                 file = request.files['payment_photo']
                 payment_photo = save_uploaded_file(file, 'activity_payment')
             
+            if 'signature_photo' in request.files:
+                file = request.files['signature_photo']
+                signature_photo = save_uploaded_file(file, 'activity_signature')
+            
             report = ActivityReport(
                 activity_id=activity_id,
+                application_no=application_no,
                 customer_name=customer_name,
+                customer_code=customer_code,
                 customer_type=customer_type,
                 customer_id=customer_id,
+                address=address,
+                account_manager=account_manager,
                 display_photo=display_photo,
                 location_photo=location_photo,
                 payment_photo=payment_photo,
+                signature_method=signature_method,
+                signature_photo=signature_photo,
                 remark=remark,
                 reported_by=current_user.id
             )
@@ -191,9 +255,14 @@ def edit_report(report_id):
     
     if request.method == 'POST':
         try:
+            report.application_no = request.form.get('application_no')
             report.customer_name = request.form.get('customer_name')
+            report.customer_code = request.form.get('customer_code')
             report.customer_type = request.form.get('customer_type')
             report.customer_id = request.form.get('customer_id')
+            report.address = request.form.get('address')
+            report.account_manager = request.form.get('account_manager')
+            report.signature_method = request.form.get('signature_method')
             report.remark = request.form.get('remark')
             report.report_status = request.form.get('report_status', 'pending')
             
@@ -218,6 +287,13 @@ def edit_report(report_id):
                     payment_photo = save_uploaded_file(file, 'activity_payment')
                     if payment_photo:
                         report.payment_photo = payment_photo
+            
+            if 'signature_photo' in request.files:
+                file = request.files['signature_photo']
+                if file and file.filename:
+                    signature_photo = save_uploaded_file(file, 'activity_signature')
+                    if signature_photo:
+                        report.signature_photo = signature_photo
             
             db.session.commit()
             flash('上报记录更新成功', 'success')
@@ -250,6 +326,11 @@ def delete_report(report_id):
         
         if report.payment_photo:
             file_path = os.path.join('static', report.payment_photo)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        if report.signature_photo:
+            file_path = os.path.join('static', report.signature_photo)
             if os.path.exists(file_path):
                 os.remove(file_path)
         

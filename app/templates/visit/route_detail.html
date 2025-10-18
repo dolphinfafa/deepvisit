@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}拜访路线详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-route"></i> 拜访路线详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="route-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>路线名称：</label>
+                                    <p class="form-control-plaintext" id="name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>路线状态：</label>
+                                    <p class="form-control-plaintext" id="status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建人：</label>
+                                    <p class="form-control-plaintext" id="creator"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>负责人：</label>
+                                    <p class="form-control-plaintext" id="visitor"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>路线客户数量：</label>
+                                    <p class="form-control-plaintext" id="customer_count"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批状态：</label>
+                                    <p class="form-control-plaintext" id="approval_status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批人：</label>
+                                    <p class="form-control-plaintext" id="approved_by"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建时间：</label>
+                                    <p class="form-control-plaintext" id="created_at"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 客户列表 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-users"></i> 路线客户列表</h5>
+                                <hr>
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="customer-table">
+                                        <thead>
+                                            <tr>
+                                                <th>客户名称</th>
+                                                <th>客户类型</th>
+                                                <th>客户编码</th>
+                                                <th>地址</th>
+                                                <th>电话</th>
+                                                <th>客户经理</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="customer-tbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 路线详情 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-map"></i> 路线详情</h5>
+                                <hr>
+                                <div class="border p-3 rounded bg-light" id="route_details"></div>
+                            </div>
+                        </div>
+
+                        <!-- 备注 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-comment"></i> 备注</h5>
+                                <hr>
+                                <div class="border p-3 rounded bg-light" id="remark"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const routeId = {{ id }};
+    loadRouteDetail(routeId);
+});
+
+async function loadRouteDetail(id) {
+    try {
+        const response = await fetch(`/visit/api/route/list`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const route = result.data.find(r => r.id == id);
+            if (route) {
+                displayRouteDetail(route);
+            } else {
+                showAlert('未找到拜访路线', 'error');
+            }
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayRouteDetail(route) {
+    // 基本信息
+    document.getElementById('name').textContent = route.name || '-';
+    document.getElementById('status').textContent = route.approval_status || '-';
+    document.getElementById('creator').textContent = route.creator || '-';
+    document.getElementById('visitor').textContent = route.visitor || '-';
+    document.getElementById('customer_count').textContent = route.customer_list ? route.customer_list.length : 0;
+    document.getElementById('approval_status').textContent = route.approval_status || '-';
+    document.getElementById('approved_by').textContent = route.approved_by || '-';
+    document.getElementById('created_at').textContent = route.created_at ? new Date(route.created_at).toLocaleString() : '-';
+    
+    // 客户列表
+    const customerTbody = document.getElementById('customer-tbody');
+    if (route.customer_list && route.customer_list.length > 0) {
+        customerTbody.innerHTML = route.customer_list.map(customer => `
+            <tr>
+                <td>${customer.name || '-'}</td>
+                <td>${customer.type_name || '-'}</td>
+                <td>${customer.code || '-'}</td>
+                <td>${customer.address || '-'}</td>
+                <td>${customer.phone || '-'}</td>
+                <td>${customer.manager || '-'}</td>
+            </tr>
+        `).join('');
+    } else {
+        customerTbody.innerHTML = '<tr><td colspan="6" class="text-center">暂无客户</td></tr>';
+    }
+    
+    // 路线详情
+    document.getElementById('route_details').textContent = JSON.stringify(route.route_details, null, 2) || '-';
+    
+    // 备注
+    document.getElementById('remark').textContent = route.remark || '-';
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('route-detail').style.display = 'block';
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

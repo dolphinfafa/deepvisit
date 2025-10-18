@@ -23,37 +23,18 @@
     <table class="table" id="dataTable">
         <thead>
             <tr>
+                <th>终端编码</th>
                 <th>终端名称</th>
-                <th>终端客户编码</th>
                 <th>终端类型</th>
-                <th>客户等级</th>
-                <th>客户经理</th>
-                <th>客户协助员</th>
-                <th>销售区域</th>
-                <th>终端标签</th>
-                <th>供货商</th>
-                <th>合作状态</th>
-                <th>手机号</th>
-                <th>备注</th>
-                <th>拜访频率</th>
-                <th>审批状态</th>
-                <th>营业执照</th>
-                <th>营业执照名称</th>
-                <th>工商注册号</th>
-                <th>注册日期</th>
-                <th>经营者</th>
-                <th>收货人姓名</th>
-                <th>收货人手机号</th>
-                <th>收货地址</th>
                 <th>详细地址</th>
-                <th>联系人姓名</th>
-                <th>联系人手机号</th>
+                <th>客户经理</th>
+                <th>创建时间</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <tr>
-                <td colspan="26" style="text-align: center; padding: 40px;">加载中...</td>
+                <td colspan="7" style="text-align: center; padding: 40px;">加载中...</td>
             </tr>
         </tbody>
     </table>
@@ -266,43 +247,28 @@
         const tbody = document.getElementById('tableBody');
         
         if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="26" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
             return;
         }
         
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td>${item.name || '-'}</td>
                 <td>${item.code || '-'}</td>
+                <td>${item.name || '-'}</td>
                 <td>${item.type || '-'}</td>
-                <td>${item.level || '-'}</td>
-                <td>${item.manager || '-'}</td>
-                <td>${item.assistant || '-'}</td>
-                <td>${item.sales_area || '-'}</td>
-                <td>${item.tags || '-'}</td>
-                <td>${item.supplier || '-'}</td>
-                <td><span class="badge badge-success">${item.cooperation_status || '-'}</span></td>
-                <td>${item.phone || '-'}</td>
-                <td>${item.remark || '-'}</td>
-                <td>${item.visit_frequency || '-'}</td>
-                <td>${getStatusBadge(item.approval_status)}</td>
-                <td>${item.business_license || '-'}</td>
-                <td>${item.license_name || '-'}</td>
-                <td>${item.registration_no || '-'}</td>
-                <td>${formatDate(item.registration_date)}</td>
-                <td>${item.operator || '-'}</td>
-                <td>${item.receiver_name || '-'}</td>
-                <td>${item.receiver_phone || '-'}</td>
-                <td>${item.receiver_address || '-'}</td>
                 <td>${item.detail_address || '-'}</td>
-                <td>${item.contact_name || '-'}</td>
-                <td>${item.contact_phone || '-'}</td>
+                <td>${item.manager || '-'}</td>
+                <td>${formatDate(item.created_at)}</td>
                 <td>
-                    <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="viewDetail(${item.id})">查看</button>
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="viewDetail(${item.id})">详情</button>
                     <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="deleteItem(${item.id})">删除</button>
                 </td>
             </tr>
         `).join('');
+    }
+    
+    function viewDetail(id) {
+        window.location.href = `/customer/terminal/${id}`;
     }
     
     function renderPagination(total, perPage, current) {

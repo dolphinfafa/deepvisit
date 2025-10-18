@@ -17,57 +17,43 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-bordered table-striped table-sm">
                             <thead>
                                 <tr>
-                                    <th>参与客户名称</th>
+                                    <th>兑付单号</th>
                                     <th>活动名称</th>
-                                    <th>活动ID</th>
-                                    <th>活动陈列照片</th>
-                                    <th>门店定位照片</th>
-                                    <th>活动兑付照片</th>
-                                    <th>上报状态</th>
-                                    <th>上报人</th>
-                                    <th>上报时间</th>
+                                    <th>活动编码</th>
+                                    <th>申请单号</th>
+                                    <th>客户名称</th>
+                                    <th>客户编码</th>
+                                    <th>详细地址</th>
+                                    <th>执行周期</th>
+                                    <th>客户经理</th>
+                                    <th>兑付状态</th>
+                                    <th>兑付照片</th>
+                                    <th>签收方式</th>
+                                    <th>签收照片</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for report in reports %}
                                 <tr>
+                                    <td>{{ report.payment_order_no or '-' }}</td>
+                                    <td>{{ report.activity.name if report.activity else '-' }}</td>
+                                    <td>{{ report.activity.activity_code if report.activity else '-' }}</td>
+                                    <td>{{ report.application_no or '-' }}</td>
                                     <td>{{ report.customer_name }}</td>
-                                    <td>{{ report.activity_name }}</td>
-                                    <td>{{ report.activity_id }}</td>
+                                    <td>{{ report.customer_code or '-' }}</td>
+                                    <td><small>{{ report.address or '-' }}</small></td>
                                     <td>
-                                        {% if report.display_photo %}
-                                        <a href="{{ url_for('static', filename=report.display_photo) }}" target="_blank">
-                                            <img src="{{ url_for('static', filename=report.display_photo) }}" 
-                                                 class="img-thumbnail" style="width: 50px; height: 50px;">
-                                        </a>
+                                        {% if report.activity and report.activity.execution_start_date and report.activity.execution_end_date %}
+                                        <small>{{ report.activity.execution_start_date.strftime('%Y-%m-%d') }} ~ {{ report.activity.execution_end_date.strftime('%Y-%m-%d') }}</small>
                                         {% else %}
-                                        <span class="text-muted">无</span>
+                                        -
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {% if report.location_photo %}
-                                        <a href="{{ url_for('static', filename=report.location_photo) }}" target="_blank">
-                                            <img src="{{ url_for('static', filename=report.location_photo) }}" 
-                                                 class="img-thumbnail" style="width: 50px; height: 50px;">
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">无</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if report.payment_photo %}
-                                        <a href="{{ url_for('static', filename=report.payment_photo) }}" target="_blank">
-                                            <img src="{{ url_for('static', filename=report.payment_photo) }}" 
-                                                 class="img-thumbnail" style="width: 50px; height: 50px;">
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">无</span>
-                                        {% endif %}
-                                    </td>
+                                    <td>{{ report.account_manager or '-' }}</td>
                                     <td>
                                         {% if report.report_status == 'pending' %}
                                         <span class="badge badge-warning">待审核</span>
@@ -77,10 +63,29 @@
                                         <span class="badge badge-danger">已拒绝</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ report.reported_by }}</td>
-                                    <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') if report.created_at else '' }}</td>
                                     <td>
-                                        <div class="btn-group" role="group">
+                                        {% if report.payment_photo %}
+                                        <a href="{{ url_for('static', filename=report.payment_photo) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename=report.payment_photo) }}" 
+                                                 class="img-thumbnail" style="width: 40px; height: 40px;">
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ report.signature_method or '-' }}</td>
+                                    <td>
+                                        {% if report.signature_photo %}
+                                        <a href="{{ url_for('static', filename=report.signature_photo) }}" target="_blank">
+                                            <img src="{{ url_for('static', filename=report.signature_photo) }}" 
+                                                 class="img-thumbnail" style="width: 40px; height: 40px;">
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm" role="group">
                                             <a href="{{ url_for('activity.edit_report', report_id=report.id) }}" 
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-edit"></i> 编辑
@@ -94,7 +99,7 @@
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">暂无上报记录</td>
+                                    <td colspan="14" class="text-center text-muted">暂无上报记录</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

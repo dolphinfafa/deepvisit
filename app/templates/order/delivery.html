@@ -32,17 +32,24 @@
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
-                    <th>发货单号</th>
-                    <th>订单编号</th>
-                    <th>发货状态</th>
+                    <th>订单号</th>
                     <th>客户名称</th>
-                    <th>收货地址</th>
+                    <th>发货单号</th>
+                    <th>发货时间</th>
+                    <th>下单时间</th>
                     <th>发货仓库</th>
                     <th>业务员</th>
-                    <th>下单时间</th>
                     <th>交货日期</th>
-                    <th>金额</th>
-                    <th>发货商品清单</th>
+                    <th>商品名称</th>
+                    <th>商品类型</th>
+                    <th>品牌</th>
+                    <th>规格</th>
+                    <th>单位</th>
+                    <th>订货价</th>
+                    <th>发货数量</th>
+                    <th>发货件数</th>
+                    <th>发货金额</th>
+                    <th>备注</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -172,27 +179,49 @@ function renderOrders(orders) {
     tbody.innerHTML = '';
     
     if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="text-center">暂无数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="19" class="text-center">暂无数据</td></tr>';
         return;
     }
     
     orders.forEach(order => {
+        // 提取第一个商品信息
+        const firstItem = order.items && order.items.length > 0 ? order.items[0] : {};
+        const totalQuantity = order.items ? order.items.reduce((sum, item) => sum + (item.quantity || 0), 0) : 0;
+        const totalPieces = order.items ? order.items.reduce((sum, item) => sum + (item.pieces || 0), 0) : 0;
+        
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${order.order_no}</td>
-            <td>${order.sales_order_no}</td>
-            <td>${getStatusBadge(order.status)}</td>
+            <td>${order.sales_order_no || '-'}</td>
             <td>${order.customer_name || '-'}</td>
-            <td>${order.receiver_address || '-'}</td>
+            <td>${order.order_no}</td>
+            <td>${formatDateTime(order.shipped_at)}</td>
+            <td>${formatDateTime(order.order_date || order.created_at)}</td>
             <td>${order.warehouse || '-'}</td>
             <td>${order.salesman || '-'}</td>
-            <td>${formatDate(order.order_date)}</td>
             <td>${formatDate(order.delivery_date)}</td>
+            <td>${firstItem.product_name || '-'}${order.items && order.items.length > 1 ? ' 等' + order.items.length + '项' : ''}</td>
+            <td>${firstItem.product_type || '-'}</td>
+            <td>${firstItem.brand || '-'}</td>
+            <td>${firstItem.specification || '-'}</td>
+            <td>${firstItem.unit || '-'}</td>
+            <td>¥${(firstItem.price || 0).toFixed(2)}</td>
+            <td>${totalQuantity}</td>
+            <td>${totalPieces || '-'}</td>
             <td>¥${order.total_amount.toFixed(2)}</td>
-            <td>${getOrderItems(order.items)}</td>
+            <td>${order.remark || '-'}</td>
             <td>${getActionButtons(order)}</td>
         `;
         tbody.appendChild(row);
+    });
+}
+
+// 格式化日期时间
+function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
     });
 }
 
@@ -219,14 +248,7 @@ function getActionButtons(order) {
     let buttons = '';
     
     // 查看详情
-    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})">查看</button>`;
-    
-    // 根据状态显示不同操作
-    if (order.status === 'pending') {
-        buttons += `<button class="btn btn-sm btn-success" onclick="showShipModal(${order.id})">发货</button>`;
-    } else if (order.status === 'shipped') {
-        buttons += `<button class="btn btn-sm btn-primary" onclick="completeOrder(${order.id})">完成</button>`;
-    }
+    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})" style="padding: 8px 16px; font-size: 14px;">详情</button>`;
     
     return buttons;
 }

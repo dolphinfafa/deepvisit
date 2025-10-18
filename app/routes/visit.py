@@ -60,22 +60,44 @@ def get_plan_list():
 @login_required
 def create_plan():
     """创建拜访计划"""
-    data = request.get_json()
-    
-    plan = VisitPlan(
-        visitor_id=data.get('visitor_id', current_user.id),
-        customer_type=data.get('customer_type'),
-        customer_id=data.get('customer_id'),
-        customer_name=data.get('customer_name'),
-        visit_date=datetime.fromisoformat(data.get('visit_date')),
-        plan_content=data.get('plan_content'),
-        created_by=current_user.id
-    )
-    
-    db.session.add(plan)
-    db.session.commit()
-    
-    return jsonify({'success': True, 'message': '创建成功', 'data': plan.to_dict()})
+    try:
+        data = request.get_json()
+        
+        # 解析时间字段
+        start_time = None
+        end_time = None
+        if data.get('start_time'):
+            from datetime import time
+            start_time_str = data.get('start_time')
+            hour, minute = map(int, start_time_str.split(':'))
+            start_time = time(hour, minute)
+        
+        if data.get('end_time'):
+            from datetime import time
+            end_time_str = data.get('end_time')
+            hour, minute = map(int, end_time_str.split(':'))
+            end_time = time(hour, minute)
+        
+        plan = VisitPlan(
+            visitor_id=data.get('visitor_id', current_user.id),
+            customer_type=data.get('customer_type'),
+            customer_id=data.get('customer_id'),
+            customer_name=data.get('customer_name'),
+            visit_date=datetime.fromisoformat(data.get('visit_date')).date(),
+            start_time=start_time,
+            end_time=end_time,
+            plan_content=data.get('plan_content'),
+            is_periodic=data.get('is_periodic', False),
+            created_by=current_user.id
+        )
+        
+        db.session.add(plan)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': '创建成功', 'data': plan.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'创建失败：{str(e)}'}), 400
 
 @bp.route('/api/users/list')
 @login_required
@@ -504,4 +526,22 @@ def get_record_detail(record_id):
         'success': True,
         'data': record.to_dict()
     })
+
+@bp.route('/plan/<int:id>')
+@login_required
+def plan_detail(id):
+    """拜访计划详情页面"""
+    return render_template('visit/plan_detail.html', id=id)
+
+@bp.route('/route/<int:id>')
+@login_required
+def route_detail(id):
+    """拜访路线详情页面"""
+    return render_template('visit/route_detail.html', id=id)
+
+@bp.route('/record/<int:id>')
+@login_required
+def record_detail(id):
+    """拜访记录详情页面"""
+    return render_template('visit/record_detail.html', id=id)
 

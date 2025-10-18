@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}拜访记录详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-list"></i> 拜访记录详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="record-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>拜访日期：</label>
+                                    <p class="form-control-plaintext" id="visit_date"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访人：</label>
+                                    <p class="form-control-plaintext" id="visitor"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访人账号：</label>
+                                    <p class="form-control-plaintext" id="visitor_account"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访客户：</label>
+                                    <p class="form-control-plaintext" id="customer_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户类型：</label>
+                                    <p class="form-control-plaintext" id="customer_type"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户经理：</label>
+                                    <p class="form-control-plaintext" id="customer_manager"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>拜访内容：</label>
+                                    <p class="form-control-plaintext" id="visit_content"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>完成状态：</label>
+                                    <p class="form-control-plaintext" id="status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>抵达位置：</label>
+                                    <p class="form-control-plaintext" id="checkin_address"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>抵达距离偏差：</label>
+                                    <p class="form-control-plaintext" id="checkin_distance_deviation"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>离开位置：</label>
+                                    <p class="form-control-plaintext" id="checkout_address"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>离开距离偏差：</label>
+                                    <p class="form-control-plaintext" id="checkout_distance_deviation"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-clock"></i> 时间信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>抵达时间：</label>
+                                    <p class="form-control-plaintext" id="checkin_time"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>离开时间：</label>
+                                    <p class="form-control-plaintext" id="checkout_time"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>拜访时长：</label>
+                                    <p class="form-control-plaintext" id="visit_duration"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 铺货信息 -->
+                        <div class="row mb-4" id="distribution-section" style="display: none;">
+                            <div class="col-12">
+                                <h5><i class="fas fa-boxes"></i> 铺货信息</h5>
+                                <hr>
+                                <div id="distribution-content"></div>
+                            </div>
+                        </div>
+
+                        <!-- 库存信息 -->
+                        <div class="row mb-4" id="inventory-section" style="display: none;">
+                            <div class="col-12">
+                                <h5><i class="fas fa-warehouse"></i> 库存信息</h5>
+                                <hr>
+                                <div id="inventory-content"></div>
+                            </div>
+                        </div>
+
+                        <!-- 竞品信息 -->
+                        <div class="row mb-4" id="competitor-section" style="display: none;">
+                            <div class="col-12">
+                                <h5><i class="fas fa-chart-line"></i> 竞品信息</h5>
+                                <hr>
+                                <div id="competitor-content"></div>
+                            </div>
+                        </div>
+
+                        <!-- 照片信息 -->
+                        <div class="row mb-4" id="photos-section" style="display: none;">
+                            <div class="col-12">
+                                <h5><i class="fas fa-images"></i> 照片信息</h5>
+                                <hr>
+                                <div id="photos-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recordId = {{ id }};
+    loadRecordDetail(recordId);
+});
+
+async function loadRecordDetail(id) {
+    try {
+        const response = await fetch(`/visit/api/record/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayRecordDetail(result.data);
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayRecordDetail(record) {
+    // 基本信息
+    document.getElementById('visit_date').textContent = record.checkin_time ? new Date(record.checkin_time).toLocaleDateString() : '-';
+    document.getElementById('visitor').textContent = record.visitor || '-';
+    document.getElementById('visitor_account').textContent = record.visitor_account || '-';
+    document.getElementById('customer_name').textContent = record.customer_name || '-';
+    document.getElementById('customer_type').textContent = formatCustomerType(record.customer_type);
+    document.getElementById('customer_manager').textContent = record.customer_manager || '-';
+    document.getElementById('visit_content').textContent = record.visit_content || '-';
+    document.getElementById('status').textContent = record.status || '-';
+    document.getElementById('checkin_address').textContent = record.checkin_address || '-';
+    document.getElementById('checkin_distance_deviation').textContent = formatDistance(record.checkin_distance_deviation);
+    document.getElementById('checkout_address').textContent = record.checkout_address || '-';
+    document.getElementById('checkout_distance_deviation').textContent = formatDistance(record.checkout_distance_deviation);
+    
+    // 时间信息
+    document.getElementById('checkin_time').textContent = formatTime(record.checkin_time);
+    document.getElementById('checkout_time').textContent = formatTime(record.checkout_time);
+    document.getElementById('visit_duration').textContent = calculateDuration(record.checkin_time, record.checkout_time);
+    
+    // 铺货信息
+    if (record.product_distribution_list && record.product_distribution_list.length > 0) {
+        document.getElementById('distribution-section').style.display = 'block';
+        displayDistributionInfo(record);
+    }
+    
+    // 库存信息
+    if (record.inventory_list && record.inventory_list.length > 0) {
+        document.getElementById('inventory-section').style.display = 'block';
+        displayInventoryInfo(record);
+    }
+    
+    // 竞品信息
+    if (record.competitor_list && record.competitor_list.length > 0) {
+        document.getElementById('competitor-section').style.display = 'block';
+        displayCompetitorInfo(record);
+    }
+    
+    // 照片信息
+    if (record.photos && record.photos.length > 0) {
+        document.getElementById('photos-section').style.display = 'block';
+        displayPhotos(record.photos);
+    }
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('record-detail').style.display = 'block';
+}
+
+function formatCustomerType(type) {
+    const typeMap = {
+        'terminal': '终端客户',
+        'distributor': '经销商客户',
+        'kol': 'KOL客户'
+    };
+    return typeMap[type] || type || '-';
+}
+
+function formatDistance(distance) {
+    if (distance === null || distance === undefined) return '-';
+    return `${distance.toFixed(1)}米`;
+}
+
+function formatTime(dateTimeStr) {
+    if (!dateTimeStr) return '-';
+    return new Date(dateTimeStr).toLocaleTimeString();
+}
+
+function calculateDuration(startTime, endTime) {
+    if (!startTime || !endTime) return '-';
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const duration = end - start;
+    const hours = Math.floor(duration / (1000 * 60 * 60));
+    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}小时${minutes}分钟`;
+}
+
+function displayDistributionInfo(record) {
+    const content = document.getElementById('distribution-content');
+    let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>商品名称</th><th>规格</th><th>数量</th><th>备注</th></tr></thead><tbody>';
+    
+    record.product_distribution_list.forEach(item => {
+        html += `<tr><td>${item.product_name || '-'}</td><td>${item.specification || '-'}</td><td>${item.quantity || '-'}</td><td>${item.remark || '-'}</td></tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    
+    if (record.distribution_remark) {
+        html += `<div class="mt-3"><strong>备注：</strong>${record.distribution_remark}</div>`;
+    }
+    
+    content.innerHTML = html;
+}
+
+function displayInventoryInfo(record) {
+    const content = document.getElementById('inventory-content');
+    let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>商品名称</th><th>规格</th><th>库存数量</th><th>备注</th></tr></thead><tbody>';
+    
+    record.inventory_list.forEach(item => {
+        html += `<tr><td>${item.product_name || '-'}</td><td>${item.specification || '-'}</td><td>${item.quantity || '-'}</td><td>${item.remark || '-'}</td></tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    
+    if (record.inventory_remark) {
+        html += `<div class="mt-3"><strong>备注：</strong>${record.inventory_remark}</div>`;
+    }
+    
+    content.innerHTML = html;
+}
+
+function displayCompetitorInfo(record) {
+    const content = document.getElementById('competitor-content');
+    let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>竞品名称</th><th>规格</th><th>价格</th><th>备注</th></tr></thead><tbody>';
+    
+    record.competitor_list.forEach(item => {
+        html += `<tr><td>${item.product_name || '-'}</td><td>${item.specification || '-'}</td><td>${item.price || '-'}</td><td>${item.remark || '-'}</td></tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    
+    if (record.competitor_remark) {
+        html += `<div class="mt-3"><strong>备注：</strong>${record.competitor_remark}</div>`;
+    }
+    
+    content.innerHTML = html;
+}
+
+function displayPhotos(photos) {
+    const content = document.getElementById('photos-content');
+    let html = '<div class="row">';
+    
+    photos.forEach(photo => {
+        html += `<div class="col-md-3 mb-3">
+            <div class="card">
+                <img src="/static/${photo.url}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <p class="card-text">${photo.description || ''}</p>
+                </div>
+            </div>
+        </div>`;
+    });
+    
+    html += '</div>';
+    content.innerHTML = html;
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

@@ -17,21 +17,159 @@
                 </div>
                 <div class="card-body">
                     <form method="POST">
-                        <div class="form-group">
-                            <label for="name">活动名称 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" 
-                                   value="{{ activity.name }}" required>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">活动名称 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ activity.name }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="activity_type">活动类型 <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="activity_type" name="activity_type" required>
+                                        <option value="">请选择</option>
+                                        <option value="付费陈列" {% if activity.activity_type == '付费陈列' %}selected{% endif %}>付费陈列</option>
+                                        <option value="新网点开发" {% if activity.activity_type == '新网点开发' %}selected{% endif %}>新网点开发</option>
+                                        <option value="消费联谊" {% if activity.activity_type == '消费联谊' %}selected{% endif %}>消费联谊</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="execution_start_date">执行周期 - 开始日期</label>
+                                    <input type="date" class="form-control" id="execution_start_date" name="execution_start_date" 
+                                           value="{{ activity.execution_start_date }}">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="execution_end_date">执行周期 - 结束日期</label>
+                                    <input type="date" class="form-control" id="execution_end_date" name="execution_end_date" 
+                                           value="{{ activity.execution_end_date }}">
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="description">活动描述</label>
+                            <label for="description">活动说明</label>
                             <textarea class="form-control" id="description" name="description" rows="4" 
-                                      placeholder="请输入活动描述...">{{ activity.description }}</textarea>
+                                      placeholder="请输入活动说明...">{{ activity.description }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="require_application">是否需要申请参与</label>
+                                    <select class="form-control" id="require_application" name="require_application">
+                                        <option value="">请选择</option>
+                                        <option value="需要" {% if activity.require_application == '需要' %}selected{% endif %}>需要</option>
+                                        <option value="不需要" {% if activity.require_application == '不需要' %}selected{% endif %}>不需要</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="customer_scope">参与客户范围</label>
+                                    <select class="form-control" id="customer_scope" name="customer_scope">
+                                        <option value="">请选择</option>
+                                        <option value="不限制" {% if activity.customer_scope == '不限制' %}selected{% endif %}>不限制</option>
+                                        <option value="终端客户" {% if activity.customer_scope == '终端客户' %}selected{% endif %}>终端客户</option>
+                                        <option value="经销商客户" {% if activity.customer_scope == '经销商客户' %}selected{% endif %}>经销商客户</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="product_scope">参与活动商品</label>
+                                    <select class="form-control" id="product_scope" name="product_scope">
+                                        <option value="">请选择</option>
+                                        <option value="全部商品" {% if activity.product_scope == '全部商品' %}selected{% endif %}>全部商品</option>
+                                        <option value="指定具体商品" {% if activity.product_scope == '指定具体商品' %}selected{% endif %}>指定具体商品</option>
+                                        <option value="指定商品类型" {% if activity.product_scope == '指定商品类型' %}selected{% endif %}>指定商品类型</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="payment_method">兑付方式</label>
+                                    <select class="form-control" id="payment_method" name="payment_method">
+                                        <option value="">请选择</option>
+                                        <option value="仅现金" {% if activity.payment_method == '仅现金' %}selected{% endif %}>仅现金</option>
+                                        <option value="仅商品" {% if activity.payment_method == '仅商品' %}selected{% endif %}>仅商品</option>
+                                        <option value="现金或商品" {% if activity.payment_method == '现金或商品' %}selected{% endif %}>现金或商品</option>
+                                        <option value="不限" {% if activity.payment_method == '不限' %}selected{% endif %}>不限</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="settlement_method">结案方式</label>
+                                    <select class="form-control" id="settlement_method" name="settlement_method">
+                                        <option value="">请选择</option>
+                                        <option value="单次结案" {% if activity.settlement_method == '单次结案' %}selected{% endif %}>单次结案</option>
+                                        <option value="月度结案" {% if activity.settlement_method == '月度结案' %}selected{% endif %}>月度结案</option>
+                                        <option value="季度结案" {% if activity.settlement_method == '季度结案' %}selected{% endif %}>季度结案</option>
+                                        <option value="半年度结案" {% if activity.settlement_method == '半年度结案' %}selected{% endif %}>半年度结案</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="customer_signature">客户签收</label>
+                                    <select class="form-control" id="customer_signature" name="customer_signature">
+                                        <option value="">请选择</option>
+                                        <option value="手写签收" {% if activity.customer_signature == '手写签收' %}selected{% endif %}>手写签收</option>
+                                        <option value="拍照签收" {% if activity.customer_signature == '拍照签收' %}selected{% endif %}>拍照签收</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="application_start_date">活动申请周期 - 开始日期</label>
+                                    <input type="date" class="form-control" id="application_start_date" name="application_start_date" 
+                                           value="{{ activity.application_start_date }}">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="application_end_date">活动申请周期 - 结束日期</label>
+                                    <input type="date" class="form-control" id="application_end_date" name="application_end_date" 
+                                           value="{{ activity.application_end_date }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cost_share_ratio">费用分摊比例（%）</label>
+                            <input type="number" class="form-control" id="cost_share_ratio" name="cost_share_ratio" 
+                                   min="0" max="100" step="0.01" placeholder="输入0-100之间的数值" 
+                                   value="{{ activity.cost_share_ratio }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="status">活动状态</label>
                             <select class="form-control" id="status" name="status">
+                                <option value="draft" {% if activity.status == 'draft' %}selected{% endif %}>草稿</option>
                                 <option value="active" {% if activity.status == 'active' %}selected{% endif %}>活跃</option>
                                 <option value="inactive" {% if activity.status == 'inactive' %}selected{% endif %}>非活跃</option>
                             </select>

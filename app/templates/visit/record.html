@@ -50,18 +50,21 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>序号</th>
-                    <th>客户名称</th>
-                    <th>客户地址</th>
-                    <th>拜访频率</th>
-                    <th>拜访内容</th>
-                    <th>到场签到</th>
-                    <th>离开签到</th>
-                    <th>铺货上报</th>
-                    <th>库存上报</th>
-                    <th>竞品上报</th>
+                    <th>拜访日期</th>
                     <th>拜访人</th>
-                    <th>记录时间</th>
+                    <th>拜访人账号</th>
+                    <th>拜访客户</th>
+                    <th>客户类型</th>
+                    <th>客户经理</th>
+                    <th>拜访内容</th>
+                    <th>完成状态</th>
+                    <th>抵达位置</th>
+                    <th>抵达距离偏差</th>
+                    <th>离开位置</th>
+                    <th>离开距离偏差</th>
+                    <th>抵达时间</th>
+                    <th>离开时间</th>
+                    <th>拜访时长</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -446,33 +449,91 @@ function renderRecords(records) {
     const tbody = document.getElementById('records-tbody');
     
     if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" class="empty-state">暂无拜访记录</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16" class="empty-state">暂无拜访记录</td></tr>';
         return;
     }
 
     tbody.innerHTML = records.map((record, index) => {
-        const rowIndex = (currentPage - 1) * perPage + index + 1;
+        const visitDate = record.visit_date || record.checkin_time || record.created_at;
+        const duration = calculateDuration(record.checkin_time, record.checkout_time);
         
         return `
             <tr>
-                <td>${rowIndex}</td>
-                <td>${record.customer_name || '-'}</td>
-                <td>${record.customer_address || '-'}</td>
-                <td>${record.visit_frequency || '-'}</td>
-                <td>${record.visit_content ? (record.visit_content.length > 50 ? record.visit_content.substring(0, 50) + '...' : record.visit_content) : '-'}</td>
-                <td>${formatCheckinInfo(record.checkin_time, record.checkin_address)}</td>
-                <td>${formatCheckoutInfo(record.checkout_time, record.checkout_address)}</td>
-                <td>${formatReportInfo(record.product_distribution_list, record.distribution_photos)}</td>
-                <td>${formatReportInfo(record.inventory_list, record.inventory_photos)}</td>
-                <td>${formatReportInfo(record.competitor_list, record.competitor_photos)}</td>
+                <td>${formatDate(visitDate)}</td>
                 <td>${record.visitor || '-'}</td>
-                <td>${formatDateTime(record.created_at)}</td>
+                <td>${record.visitor_account || '-'}</td>
+                <td>${record.customer_name || '-'}</td>
+                <td>${formatCustomerType(record.customer_type)}</td>
+                <td>${record.customer_manager || '-'}</td>
+                <td>${record.visit_content ? (record.visit_content.length > 30 ? record.visit_content.substring(0, 30) + '...' : record.visit_content) : '-'}</td>
+                <td>${getCompleteStatusBadge(record.status)}</td>
+                <td>${record.checkin_address || '-'}</td>
+                <td>${formatDistance(record.checkin_distance_deviation)}</td>
+                <td>${record.checkout_address || '-'}</td>
+                <td>${formatDistance(record.checkout_distance_deviation)}</td>
+                <td>${formatTime(record.checkin_time)}</td>
+                <td>${formatTime(record.checkout_time)}</td>
+                <td>${duration}</td>
                 <td>
                     <button class="btn btn-info" onclick="showDetail(${record.id})">详情</button>
                 </td>
             </tr>
         `;
     }).join('');
+}
+
+// 格式化客户类型
+function formatCustomerType(type) {
+    const typeMap = {
+        'terminal': '终端客户',
+        'distributor': '经销商',
+        'kol': 'KOL客户'
+    };
+    return typeMap[type] || type || '-';
+}
+
+// 获取完成状态标签
+function getCompleteStatusBadge(status) {
+    const statusMap = {
+        'completed': '<span class="badge badge-success">已完成</span>',
+        'in_progress': '<span class="badge badge-warning">进行中</span>',
+        'pending': '<span class="badge badge-secondary">待开始</span>'
+    };
+    return statusMap[status] || '<span class="badge badge-secondary">未知</span>';
+}
+
+// 格式化距离偏差
+function formatDistance(distance) {
+    if (!distance && distance !== 0) return '-';
+    return `${distance}米`;
+}
+
+// 格式化日期
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN');
+}
+
+// 格式化时间
+function formatTime(dateTimeStr) {
+    if (!dateTimeStr) return '-';
+    const date = new Date(dateTimeStr);
+    return date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// 计算时长
+function calculateDuration(startTime, endTime) {
+    if (!startTime || !endTime) return '-';
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const diff = end - start;
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    return `${hours}小时${minutes}分钟`;
 }
 
 // 格式化签到信息

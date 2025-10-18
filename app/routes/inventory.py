@@ -336,6 +336,19 @@ def get_stock_summary():
         'data': list(warehouse_summary.values())
     })
 
+@bp.route('/api/stock/<int:id>', methods=['GET'])
+@login_required
+def get_stock_detail(id):
+    """获取库存详情"""
+    inventory = Inventory.query.get_or_404(id)
+    return jsonify({'success': True, 'data': inventory.to_dict()})
+
+@bp.route('/stock/<int:id>')
+@login_required
+def stock_detail(id):
+    """库存详情页面"""
+    return render_template('inventory/stock_detail.html', id=id)
+
 # ========== 文件上传 ==========
 @bp.route('/api/upload', methods=['POST'])
 @login_required

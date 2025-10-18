@@ -164,7 +164,10 @@ class KOL(db.Model):
     province = db.Column(db.String(64))  # 省
     city = db.Column(db.String(64))  # 市
     district = db.Column(db.String(64))  # 区
+    street = db.Column(db.String(128))  # 街道
     detail_address = db.Column(db.String(256))  # 详细地址
+    hobbies = db.Column(db.String(256))  # 个人爱好
+    remark = db.Column(db.Text)  # 备注
     receiver_name = db.Column(db.String(64))  # 收货人姓名
     receiver_phone = db.Column(db.String(20))  # 收货人手机
     receiver_address = db.Column(db.String(256))  # 收货地址
@@ -195,10 +198,14 @@ class KOL(db.Model):
             'province': self.province,
             'city': self.city,
             'district': self.district,
+            'street': self.street,
             'detail_address': self.detail_address,
+            'hobbies': self.hobbies,
+            'remark': self.remark,
             'receiver_name': self.receiver_name,
             'receiver_phone': self.receiver_phone,
             'receiver_address': self.receiver_address,
+            'creator': self.creator.name if hasattr(self, 'creator') and self.creator else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

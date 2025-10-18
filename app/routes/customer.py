@@ -135,6 +135,12 @@ def delete_terminal(id):
     db.session.commit()
     return jsonify({'success': True, 'message': '删除成功'})
 
+@bp.route('/terminal/<int:id>')
+@login_required
+def terminal_detail(id):
+    """终端客户详情页面"""
+    return render_template('customer/terminal_detail.html', id=id)
+
 # ========== 直营商 ==========
 @bp.route('/distributor')
 @login_required
@@ -228,6 +234,28 @@ def create_distributor():
     
     return jsonify({'success': True, 'message': '创建成功', 'data': distributor.to_dict()})
 
+@bp.route('/api/distributor/<int:id>', methods=['GET'])
+@login_required
+def get_distributor(id):
+    """获取经销商详情"""
+    distributor = DirectDistributor.query.get_or_404(id)
+    return jsonify({'success': True, 'data': distributor.to_dict()})
+
+@bp.route('/api/distributor/<int:id>', methods=['DELETE'])
+@login_required
+def delete_distributor(id):
+    """删除经销商"""
+    distributor = DirectDistributor.query.get_or_404(id)
+    db.session.delete(distributor)
+    db.session.commit()
+    return jsonify({'success': True, 'message': '删除成功'})
+
+@bp.route('/distributor/<int:id>')
+@login_required
+def distributor_detail(id):
+    """经销商详情页面"""
+    return render_template('customer/distributor_detail.html', id=id)
+
 # ========== KOL ==========
 @bp.route('/kol')
 @login_required
@@ -290,7 +318,10 @@ def create_kol():
         province=data.get('province'),
         city=data.get('city'),
         district=data.get('district'),
+        street=data.get('street'),
         detail_address=data.get('detail_address'),
+        hobbies=data.get('hobbies'),
+        remark=data.get('remark'),
         receiver_name=data.get('receiver_name'),
         receiver_phone=data.get('receiver_phone'),
         receiver_address=data.get('receiver_address'),
@@ -301,6 +332,28 @@ def create_kol():
     db.session.commit()
     
     return jsonify({'success': True, 'message': '创建成功', 'data': kol.to_dict()})
+
+@bp.route('/api/kol/<int:id>', methods=['GET'])
+@login_required
+def get_kol(id):
+    """获取KOL详情"""
+    kol = KOL.query.get_or_404(id)
+    return jsonify({'success': True, 'data': kol.to_dict()})
+
+@bp.route('/api/kol/<int:id>', methods=['DELETE'])
+@login_required
+def delete_kol(id):
+    """删除KOL"""
+    kol = KOL.query.get_or_404(id)
+    db.session.delete(kol)
+    db.session.commit()
+    return jsonify({'success': True, 'message': '删除成功'})
+
+@bp.route('/kol/<int:id>')
+@login_required
+def kol_detail(id):
+    """KOL详情页面"""
+    return render_template('customer/kol_detail.html', id=id)
 
 # ========== 客户联系人 ==========
 @bp.route('/contact')

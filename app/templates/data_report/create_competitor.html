@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}新增竞品上报{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h2>新增竞品上报</h2>
+    <div class="user-info">
+        <a href="{{ url_for('data_report.competitor_list') }}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+<div class="content-box">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        <div class="horizontal-layout">
+            <div class="form-group">
+                <label for="competitor_name">竞品名称 <span style="color: red;">*</span></label>
+                <input type="text" class="form-control" id="competitor_name" name="competitor_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="product_name">商品名称（我方商品）</label>
+                <select class="form-control" id="product_name" name="product_name">
+                    <option value="">请选择（可选）</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="remark">备注</label>
+            <textarea class="form-control" id="remark" name="remark" rows="4" 
+                      placeholder="请描述竞品的特点、价格、市场表现等信息"></textarea>
+        </div>
+        
+        <div class="form-group" style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="margin-right: 10px;">提交</button>
+            <a href="{{ url_for('data_report.competitor_list') }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 页面加载时获取商品列表
+$(document).ready(function() {
+    loadProducts();
+});
+
+function loadProducts() {
+    $.get('/data_report/api/products', function(data) {
+        let select = $('#product_name');
+        select.empty();
+        select.append('<option value="">请选择（可选）</option>');
+        data.forEach(function(product) {
+            select.append(`<option value="${product.name}">${product.name}</option>`);
+        });
+    });
+}
+</script>
+{% endblock %}
+

@@ -22,7 +22,7 @@ def create_app(config_class=Config):
     CORS(app)
     
     # 注册蓝图
-    from app.routes import auth, customer, visit, order, inventory, system, activity
+    from app.routes import auth, customer, visit, order, inventory, system, activity, data_report
     app.register_blueprint(auth.bp)
     app.register_blueprint(customer.bp)
     app.register_blueprint(visit.bp)
@@ -30,6 +30,7 @@ def create_app(config_class=Config):
     app.register_blueprint(inventory.bp)
     app.register_blueprint(system.bp)
     app.register_blueprint(activity.bp)
+    app.register_blueprint(data_report.bp)
     
     # 注册主页路由
     from app.routes import main

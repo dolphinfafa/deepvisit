@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}库存详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-boxes"></i> 库存详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="stock-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>商品编码：</label>
+                                    <p class="form-control-plaintext" id="product_code"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>商品名称：</label>
+                                    <p class="form-control-plaintext" id="product_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>基本单位：</label>
+                                    <p class="form-control-plaintext" id="product_unit"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>在售状态：</label>
+                                    <p class="form-control-plaintext" id="is_on_sale"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>商品规格：</label>
+                                    <p class="form-control-plaintext" id="product_specification"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>商品分类：</label>
+                                    <p class="form-control-plaintext" id="product_category"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>品牌：</label>
+                                    <p class="form-control-plaintext" id="product_brand"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>商品类型：</label>
+                                    <p class="form-control-plaintext" id="product_type"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>售价：</label>
+                                    <p class="form-control-plaintext" id="product_price"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>成本价：</label>
+                                    <p class="form-control-plaintext" id="product_cost"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>最后更新时间：</label>
+                                    <p class="form-control-plaintext" id="updated_at"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 库存信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-warehouse"></i> 库存信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>仓库名称：</label>
+                                    <p class="form-control-plaintext" id="warehouse_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>仓库类型：</label>
+                                    <p class="form-control-plaintext" id="warehouse_type"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>实物库存：</label>
+                                    <p class="form-control-plaintext" id="quantity"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>占用库存：</label>
+                                    <p class="form-control-plaintext" id="occupied_quantity"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>可销库存：</label>
+                                    <p class="form-control-plaintext" id="available_quantity"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>成本单价：</label>
+                                    <p class="form-control-plaintext" id="cost"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>实物库存成本金额：</label>
+                                    <p class="form-control-plaintext" id="total_cost"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>最低库存：</label>
+                                    <p class="form-control-plaintext" id="min_stock"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 库存预警 -->
+                        <div class="row mb-4" id="stock-alert" style="display: none;">
+                            <div class="col-12">
+                                <h5><i class="fas fa-exclamation-triangle"></i> 库存预警</h5>
+                                <hr>
+                                <div class="alert alert-warning" id="alert-message">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 库存变动记录 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-history"></i> 库存变动记录</h5>
+                                <hr>
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="stock-history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>变动时间</th>
+                                                <th>变动类型</th>
+                                                <th>变动数量</th>
+                                                <th>变动前库存</th>
+                                                <th>变动后库存</th>
+                                                <th>操作人</th>
+                                                <th>备注</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="stock-history-tbody">
+                                            <tr>
+                                                <td colspan="7" class="text-center">暂无变动记录</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stockId = {{ id }};
+    loadStockDetail(stockId);
+});
+
+async function loadStockDetail(id) {
+    try {
+        const response = await fetch(`/inventory/api/stock/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayStockDetail(result.data);
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayStockDetail(stock) {
+    const product = stock.product || {};
+    
+    // 基本信息
+    document.getElementById('product_code').textContent = product.code || '-';
+    document.getElementById('product_name').textContent = product.name || '-';
+    document.getElementById('product_unit').textContent = product.unit || '-';
+    document.getElementById('is_on_sale').innerHTML = product.is_on_sale ? 
+        '<span class="badge badge-success">在售</span>' : 
+        '<span class="badge badge-secondary">停售</span>';
+    document.getElementById('product_specification').textContent = product.specification || '-';
+    document.getElementById('product_category').textContent = product.category || '-';
+    document.getElementById('product_brand').textContent = product.brand || '-';
+    document.getElementById('product_type').textContent = product.type || '-';
+    document.getElementById('product_price').textContent = product.price ? '¥' + product.price.toFixed(2) : '-';
+    document.getElementById('product_cost').textContent = product.cost ? '¥' + product.cost.toFixed(2) : '-';
+    document.getElementById('updated_at').textContent = stock.updated_at ? new Date(stock.updated_at).toLocaleString() : '-';
+    
+    // 库存信息
+    document.getElementById('warehouse_name').textContent = stock.warehouse_name || '-';
+    document.getElementById('warehouse_type').textContent = stock.warehouse_type || '-';
+    document.getElementById('quantity').textContent = stock.quantity || 0;
+    document.getElementById('occupied_quantity').textContent = stock.occupied_quantity || 0;
+    
+    const availableQuantity = (stock.quantity || 0) - (stock.occupied_quantity || 0);
+    document.getElementById('available_quantity').textContent = availableQuantity;
+    
+    document.getElementById('cost').textContent = stock.cost ? '¥' + stock.cost.toFixed(2) : '-';
+    document.getElementById('total_cost').textContent = stock.total_cost ? '¥' + stock.total_cost.toFixed(2) : '-';
+    document.getElementById('min_stock').textContent = stock.min_stock || 0;
+    
+    // 库存预警
+    checkStockAlert(stock);
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('stock-detail').style.display = 'block';
+}
+
+function checkStockAlert(stock) {
+    const currentStock = stock.quantity || 0;
+    const minStock = stock.min_stock || 0;
+    const maxStock = stock.max_stock || 0;
+    
+    let alertMessage = '';
+    let showAlert = false;
+    
+    if (currentStock <= minStock && minStock > 0) {
+        alertMessage = `库存不足！当前库存 ${currentStock}，最低库存 ${minStock}`;
+        showAlert = true;
+    } else if (maxStock > 0 && currentStock >= maxStock) {
+        alertMessage = `库存过多！当前库存 ${currentStock}，最高库存 ${maxStock}`;
+        showAlert = true;
+    }
+    
+    if (showAlert) {
+        document.getElementById('alert-message').textContent = alertMessage;
+        document.getElementById('stock-alert').style.display = 'block';
+    }
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

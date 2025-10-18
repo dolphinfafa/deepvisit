@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}销售订单详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-shopping-cart"></i> 销售订单详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="order-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>订单号：</label>
+                                    <p class="form-control-plaintext" id="order_no"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户名称：</label>
+                                    <p class="form-control-plaintext" id="customer_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>订单状态：</label>
+                                    <p class="form-control-plaintext" id="status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批状态：</label>
+                                    <p class="form-control-plaintext" id="approval_status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>业务员：</label>
+                                    <p class="form-control-plaintext" id="salesman"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>下单时间：</label>
+                                    <p class="form-control-plaintext" id="order_date"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>交货日期：</label>
+                                    <p class="form-control-plaintext" id="delivery_date"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>发货仓库：</label>
+                                    <p class="form-control-plaintext" id="warehouse"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>收货地址：</label>
+                                    <p class="form-control-plaintext" id="receiver_address"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 金额信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-money-bill-wave"></i> 金额信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>订购金额：</label>
+                                    <p class="form-control-plaintext" id="total_amount"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>优惠金额：</label>
+                                    <p class="form-control-plaintext" id="discount_amount"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>优惠后金额：</label>
+                                    <p class="form-control-plaintext" id="final_amount"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 商品明细 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-list"></i> 商品明细</h5>
+                                <hr>
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>商品名称</th>
+                                                <th>规格</th>
+                                                <th>单位</th>
+                                                <th>订货价</th>
+                                                <th>订购数</th>
+                                                <th>小计</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="items-tbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 审批信息 -->
+                        <div class="row mb-4" id="approval-section" style="display: none;">
+                            <div class="col-12">
+                                <h5><i class="fas fa-check-circle"></i> 审批信息</h5>
+                                <hr>
+                                <div class="form-group">
+                                    <label>审批人：</label>
+                                    <p class="form-control-plaintext" id="approved_by"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批时间：</label>
+                                    <p class="form-control-plaintext" id="approved_at"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批意见：</label>
+                                    <p class="form-control-plaintext" id="approval_comment"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderId = {{ id }};
+    loadOrderDetail(orderId);
+});
+
+async function loadOrderDetail(id) {
+    try {
+        const response = await fetch(`/order/api/sales/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayOrderDetail(result.data);
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayOrderDetail(order) {
+    // 基本信息
+    document.getElementById('order_no').textContent = order.order_no || '-';
+    document.getElementById('customer_name').textContent = order.customer_name || '-';
+    document.getElementById('status').innerHTML = getStatusBadge(order.status);
+    document.getElementById('approval_status').innerHTML = getApprovalStatusBadge(order.approval_status);
+    document.getElementById('salesman').textContent = order.salesman || '-';
+    document.getElementById('order_date').textContent = order.order_date ? new Date(order.order_date).toLocaleString() : '-';
+    document.getElementById('delivery_date').textContent = order.delivery_date || '-';
+    document.getElementById('warehouse').textContent = order.warehouse || '-';
+    document.getElementById('receiver_address').textContent = order.receiver_address || '-';
+    
+    // 金额信息
+    document.getElementById('total_amount').textContent = order.total_amount ? '¥' + order.total_amount.toFixed(2) : '-';
+    document.getElementById('discount_amount').textContent = order.discount_amount ? '¥' + order.discount_amount.toFixed(2) : '-';
+    document.getElementById('final_amount').textContent = order.final_amount ? '¥' + order.final_amount.toFixed(2) : '-';
+    
+    // 商品明细
+    const itemsTbody = document.getElementById('items-tbody');
+    if (order.items && order.items.length > 0) {
+        itemsTbody.innerHTML = order.items.map(item => `
+            <tr>
+                <td>${item.product_name || '-'}</td>
+                <td>${item.specification || '-'}</td>
+                <td>${item.unit || '-'}</td>
+                <td>¥${(item.price || 0).toFixed(2)}</td>
+                <td>${item.quantity || 0}</td>
+                <td>¥${((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>
+            </tr>
+        `).join('');
+    } else {
+        itemsTbody.innerHTML = '<tr><td colspan="6" class="text-center">暂无商品</td></tr>';
+    }
+    
+    // 审批信息
+    if (order.approved_by || order.approved_at || order.approval_comment) {
+        document.getElementById('approval-section').style.display = 'block';
+        document.getElementById('approved_by').textContent = order.approved_by || '-';
+        document.getElementById('approved_at').textContent = order.approved_at ? new Date(order.approved_at).toLocaleString() : '-';
+        document.getElementById('approval_comment').textContent = order.approval_comment || '-';
+    }
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('order-detail').style.display = 'block';
+}
+
+function getStatusBadge(status) {
+    const statusMap = {
+        'draft': '<span class="badge badge-secondary">草稿</span>',
+        'pending': '<span class="badge badge-warning">待审批</span>',
+        'approved': '<span class="badge badge-success">已审批</span>',
+        'rejected': '<span class="badge badge-danger">已拒绝</span>',
+        'delivered': '<span class="badge badge-info">已发货</span>',
+        'cancelled': '<span class="badge badge-dark">已取消</span>'
+    };
+    return statusMap[status] || '<span class="badge badge-light">未知</span>';
+}
+
+function getApprovalStatusBadge(status) {
+    const statusMap = {
+        'pending': '<span class="badge badge-warning">待审批</span>',
+        'approved': '<span class="badge badge-success">已审批</span>',
+        'rejected': '<span class="badge badge-danger">已拒绝</span>'
+    };
+    return statusMap[status] || '<span class="badge badge-light">未知</span>';
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

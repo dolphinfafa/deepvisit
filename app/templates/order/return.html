@@ -36,16 +36,19 @@
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
-                    <th>退货订单</th>
-                    <th>订单编号</th>
+                    <th>退货订单号</th>
                     <th>客户名称</th>
-                    <th>收货地址</th>
-                    <th>收货仓库</th>
                     <th>业务员</th>
-                    <th>退货时间</th>
-                    <th>合计金额</th>
-                    <th>退货商品</th>
-                    <th>审批流程</th>
+                    <th>下单时间</th>
+                    <th>客户编码</th>
+                    <th>退单状态</th>
+                    <th>收货仓库</th>
+                    <th>商品名称</th>
+                    <th>规格</th>
+                    <th>退货单位</th>
+                    <th>退货价</th>
+                    <th>退货金额</th>
+                    <th>确认金额</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -163,26 +166,44 @@ function renderOrders(orders) {
     tbody.innerHTML = '';
     
     if (orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="text-center">暂无数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14" class="text-center">暂无数据</td></tr>';
         return;
     }
     
     orders.forEach(order => {
+        // 提取第一个商品信息
+        const firstItem = order.items && order.items.length > 0 ? order.items[0] : {};
+        const returnAmount = order.total_amount || 0;
+        const confirmedAmount = order.confirmed_amount || 0;
+        
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${getReturnTypeBadge(order.return_type)}</td>
             <td>${order.order_no}</td>
             <td>${order.customer_name || '-'}</td>
-            <td>${order.receiver_address || '-'}</td>
-            <td>${order.warehouse || '-'}</td>
             <td>${order.salesman || '-'}</td>
-            <td>${formatDate(order.order_date)}</td>
-            <td>¥${order.total_amount.toFixed(2)}</td>
-            <td>${getOrderItems(order.items)}</td>
-            <td>${getApprovalStatus(order)}</td>
+            <td>${formatDateTime(order.order_date || order.created_at)}</td>
+            <td>${order.customer_code || '-'}</td>
+            <td>${getStatusBadge(order.status)}</td>
+            <td>${order.warehouse || '-'}</td>
+            <td>${firstItem.product_name || '-'}${order.items && order.items.length > 1 ? ' 等' + order.items.length + '项' : ''}</td>
+            <td>${firstItem.specification || '-'}</td>
+            <td>${firstItem.unit || '-'}</td>
+            <td>¥${(firstItem.price || 0).toFixed(2)}</td>
+            <td>¥${returnAmount.toFixed(2)}</td>
+            <td>¥${confirmedAmount.toFixed(2)}</td>
             <td>${getActionButtons(order)}</td>
         `;
         tbody.appendChild(row);
+    });
+}
+
+// 格式化日期时间
+function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
     });
 }
 
@@ -232,16 +253,7 @@ function getActionButtons(order) {
     let buttons = '';
     
     // 查看详情
-    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})">查看</button>`;
-    
-    // 根据状态显示不同操作
-    if (order.status === 'draft') {
-        buttons += `<button class="btn btn-sm btn-warning" onclick="submitOrder(${order.id})">提交</button>`;
-    } else if (order.status === 'pending') {
-        buttons += `<button class="btn btn-sm btn-success" onclick="showApprovalModal(${order.id})">审批</button>`;
-    } else if (order.status === 'approved') {
-        buttons += `<button class="btn btn-sm btn-primary" onclick="showConfirmModal(${order.id})">确认退货</button>`;
-    }
+    buttons += `<button class="btn btn-sm btn-info" onclick="viewOrder(${order.id})" style="padding: 8px 16px; font-size: 14px;">详情</button>`;
     
     return buttons;
 }

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}拜访计划详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-check"></i> 拜访计划详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="plan-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>拜访日期：</label>
+                                    <p class="form-control-plaintext" id="visit_date"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访人：</label>
+                                    <p class="form-control-plaintext" id="visitor"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访人账号：</label>
+                                    <p class="form-control-plaintext" id="visitor_account"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户名称：</label>
+                                    <p class="form-control-plaintext" id="customer_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>所属路线：</label>
+                                    <p class="form-control-plaintext" id="route_name"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>客户编码：</label>
+                                    <p class="form-control-plaintext" id="customer_code"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访状态：</label>
+                                    <p class="form-control-plaintext" id="status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批状态：</label>
+                                    <p class="form-control-plaintext" id="approval_status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建人：</label>
+                                    <p class="form-control-plaintext" id="creator"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建时间：</label>
+                                    <p class="form-control-plaintext" id="created_at"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间安排 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-clock"></i> 时间安排</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>开始时间：</label>
+                                    <p class="form-control-plaintext" id="start_time"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>结束时间：</label>
+                                    <p class="form-control-plaintext" id="end_time"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 计划内容 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-file-text"></i> 计划内容</h5>
+                                <hr>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label>计划内容：</label>
+                                    <div class="border p-3 rounded bg-light" id="plan_content"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const planId = {{ id }};
+    loadPlanDetail(planId);
+});
+
+async function loadPlanDetail(id) {
+    try {
+        const response = await fetch(`/visit/api/plan/list`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const plan = result.data.find(p => p.id == id);
+            if (plan) {
+                displayPlanDetail(plan);
+            } else {
+                showAlert('未找到拜访计划', 'error');
+            }
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayPlanDetail(plan) {
+    // 基本信息
+    document.getElementById('visit_date').textContent = plan.visit_date || '-';
+    document.getElementById('visitor').textContent = plan.visitor || '-';
+    document.getElementById('visitor_account').textContent = plan.visitor_account || '-';
+    document.getElementById('customer_name').textContent = plan.customer_name || '-';
+    document.getElementById('route_name').textContent = plan.route_name || '-';
+    document.getElementById('customer_code').textContent = plan.customer_code || '-';
+    document.getElementById('status').textContent = plan.status || '-';
+    document.getElementById('approval_status').textContent = plan.approval_status || '-';
+    document.getElementById('creator').textContent = plan.creator || '-';
+    document.getElementById('created_at').textContent = plan.created_at ? new Date(plan.created_at).toLocaleString() : '-';
+    
+    // 时间安排
+    document.getElementById('start_time').textContent = plan.start_time || '-';
+    document.getElementById('end_time').textContent = plan.end_time || '-';
+    
+    // 计划内容
+    document.getElementById('plan_content').textContent = plan.plan_content || '-';
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('plan-detail').style.display = 'block';
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

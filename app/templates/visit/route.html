@@ -56,10 +56,10 @@
                             <thead>
                                 <tr>
                                     <th>路线名称</th>
-                                    <th>客户经理</th>
-                                    <th>客户数量</th>
-                                    <th>路线详情</th>
-                                    <th>审批状态</th>
+                                    <th>路线状态</th>
+                                    <th>创建人</th>
+                                    <th>负责人</th>
+                                    <th>路线客户数量</th>
                                     <th>创建时间</th>
                                     <th>操作</th>
                                 </tr>
@@ -398,35 +398,36 @@ function renderRouteTable(data) {
     }
     
     data.forEach(route => {
-        const approvalStatusBadge = getApprovalStatusBadge(route.approval_status);
+        const routeStatusBadge = getRouteStatusBadge(route.status || 'active');
         const customerCount = route.customer_list ? route.customer_list.length : 0;
         const createdDate = route.created_at ? new Date(route.created_at).toLocaleDateString() : '-';
         
         tbody.append(`
             <tr>
                 <td>${route.name}</td>
+                <td>${routeStatusBadge}</td>
+                <td>${route.creator || '-'}</td>
                 <td>${route.visitor || '-'}</td>
                 <td><span class="badge badge-info">${customerCount}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-info" onclick="viewRouteDetail(${route.id})">
-                        <i class="fas fa-eye"></i> 查看详情
-                    </button>
-                </td>
-                <td>${approvalStatusBadge}</td>
                 <td>${createdDate}</td>
                 <td>
                     <button class="btn btn-sm btn-info" onclick="viewRouteDetail(${route.id})">
-                        <i class="fas fa-eye"></i> 查看
+                        <i class="fas fa-eye"></i> 详情
                     </button>
-                    ${route.approval_status === 'pending' ? `
-                        <button class="btn btn-sm btn-success" onclick="approveRoute(${route.id}, 'approve')">
-                            <i class="fas fa-check"></i> 审批
-                        </button>
-                    ` : ''}
                 </td>
             </tr>
         `);
     });
+}
+
+// 获取路线状态标签
+function getRouteStatusBadge(status) {
+    const statusMap = {
+        'active': '<span class="badge badge-success">活跃</span>',
+        'inactive': '<span class="badge badge-secondary">未启用</span>',
+        'archived': '<span class="badge badge-dark">已归档</span>'
+    };
+    return statusMap[status] || '<span class="badge badge-secondary">未知</span>';
 }
 
 // 获取审批状态标签

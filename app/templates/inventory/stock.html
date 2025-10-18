@@ -29,18 +29,16 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>仓库名称</th>
-                    <th>仓库类型</th>
                     <th>商品编码</th>
                     <th>商品名称</th>
-                    <th>规格</th>
-                    <th>单位</th>
-                    <th>库存数量</th>
+                    <th>基本单位</th>
+                    <th>在售状态</th>
+                    <th>实物库存</th>
+                    <th>占用库存</th>
+                    <th>可销库存</th>
                     <th>成本单价</th>
-                    <th>库存总价值</th>
-                    <th>最低库存</th>
-                    <th>最高库存</th>
-                    <th>更新时间</th>
+                    <th>实物库存成本金额</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody id="stockTableBody">
@@ -161,27 +159,41 @@ function renderStockTable(stocks) {
     const tbody = document.getElementById('stockTableBody');
     tbody.innerHTML = '';
     
+    if (stocks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+        return;
+    }
+    
     stocks.forEach(stock => {
-        const typeText = stock.warehouse_type === 'qiguang' ? '启光仓库' : 
-                        stock.warehouse_type === 'direct_sales' ? '直营商仓库' : '未知';
+        const product = stock.product || {};
+        const physicalStock = stock.quantity || 0;
+        const occupiedStock = stock.occupied_quantity || 0;
+        const availableStock = physicalStock - occupiedStock;
+        const saleStatus = product.is_on_sale ? '在售' : '停售';
+        const costAmount = physicalStock * (stock.cost || 0);
         
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${stock.warehouse_name || ''}</td>
-            <td>${typeText}</td>
-            <td>${stock.product ? stock.product.code : ''}</td>
-            <td>${stock.product ? stock.product.name : ''}</td>
-            <td>${stock.product ? stock.product.specification : ''}</td>
-            <td>${stock.product ? stock.product.unit : ''}</td>
-            <td class="${stock.quantity <= stock.min_stock ? 'low-stock' : ''}">${stock.quantity}</td>
-            <td>¥${stock.cost.toFixed(2)}</td>
-            <td>¥${stock.total_cost.toFixed(2)}</td>
-            <td>${stock.min_stock}</td>
-            <td>${stock.max_stock}</td>
-            <td>${stock.updated_at ? new Date(stock.updated_at).toLocaleString() : ''}</td>
+            <td>${product.code || '-'}</td>
+            <td>${product.name || '-'}</td>
+            <td>${product.unit || '-'}</td>
+            <td><span class="badge ${product.is_on_sale ? 'badge-success' : 'badge-secondary'}">${saleStatus}</span></td>
+            <td class="${physicalStock <= (stock.min_stock || 0) ? 'low-stock' : ''}">${physicalStock}</td>
+            <td>${occupiedStock}</td>
+            <td>${availableStock}</td>
+            <td>¥${(stock.cost || 0).toFixed(2)}</td>
+            <td>¥${costAmount.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="viewStockDetail(${stock.id})" style="padding: 8px 16px; font-size: 14px;">详情</button>
+            </td>
         `;
         tbody.appendChild(row);
     });
+}
+
+// 查看库存详情
+function viewStockDetail(stockId) {
+    window.location.href = `/inventory/stock/${stockId}`;
 }
 
 // 渲染分页

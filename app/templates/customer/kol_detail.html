@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}KOL详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-star"></i> KOL详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="kol-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>KOL姓名：</label>
+                                    <p class="form-control-plaintext" id="name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>KOL编码：</label>
+                                    <p class="form-control-plaintext" id="code"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>性别：</label>
+                                    <p class="form-control-plaintext" id="gender"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>生日：</label>
+                                    <p class="form-control-plaintext" id="birthday"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>年龄段：</label>
+                                    <p class="form-control-plaintext" id="age_group"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>电话：</label>
+                                    <p class="form-control-plaintext" id="phone"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>消费者类型：</label>
+                                    <p class="form-control-plaintext" id="consumer_type"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>合作状态：</label>
+                                    <p class="form-control-plaintext" id="cooperation_status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户经理：</label>
+                                    <p class="form-control-plaintext" id="manager"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>职业：</label>
+                                    <p class="form-control-plaintext" id="profession"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>个人爱好：</label>
+                                    <p class="form-control-plaintext" id="hobbies"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建时间：</label>
+                                    <p class="form-control-plaintext" id="created_at"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 饮酒习惯 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-wine-glass"></i> 饮酒习惯</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>饮酒频率：</label>
+                                    <p class="form-control-plaintext" id="drinking_frequency"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>用酒场景：</label>
+                                    <p class="form-control-plaintext" id="drinking_scene"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 地址信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-map-marker-alt"></i> 地址信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>省市区：</label>
+                                    <p class="form-control-plaintext" id="province_city_district"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>街道：</label>
+                                    <p class="form-control-plaintext" id="street"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>详细地址：</label>
+                                    <p class="form-control-plaintext" id="detail_address"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>定位：</label>
+                                    <p class="form-control-plaintext" id="position_note"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>所在城市：</label>
+                                    <p class="form-control-plaintext" id="location"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>收货人姓名：</label>
+                                    <p class="form-control-plaintext" id="receiver_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>收货人手机：</label>
+                                    <p class="form-control-plaintext" id="receiver_phone"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>收货地址：</label>
+                                    <p class="form-control-plaintext" id="receiver_address"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 标签和备注 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-tags"></i> 标签和备注</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>KOL标签：</label>
+                                    <p class="form-control-plaintext" id="kol_tags"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建人：</label>
+                                    <p class="form-control-plaintext" id="creator"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>备注：</label>
+                                    <p class="form-control-plaintext" id="remark"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const kolId = {{ id }};
+    loadKOLDetail(kolId);
+});
+
+async function loadKOLDetail(id) {
+    try {
+        const response = await fetch(`/customer/api/kol/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayKOLDetail(result.data);
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayKOLDetail(kol) {
+    // 基本信息
+    document.getElementById('name').textContent = kol.name || '-';
+    document.getElementById('code').textContent = kol.code || '-';
+    document.getElementById('gender').textContent = kol.gender || '-';
+    document.getElementById('birthday').textContent = kol.birthday || '-';
+    document.getElementById('age_group').textContent = kol.age_group || '-';
+    document.getElementById('phone').textContent = kol.phone || '-';
+    document.getElementById('consumer_type').textContent = kol.consumer_type || '-';
+    document.getElementById('cooperation_status').textContent = kol.cooperation_status || '-';
+    document.getElementById('manager').textContent = kol.manager || '-';
+    document.getElementById('profession').textContent = kol.profession || '-';
+    document.getElementById('hobbies').textContent = kol.hobbies || '-';
+    document.getElementById('created_at').textContent = kol.created_at ? new Date(kol.created_at).toLocaleString() : '-';
+    
+    // 饮酒习惯
+    document.getElementById('drinking_frequency').textContent = kol.drinking_frequency || '-';
+    document.getElementById('drinking_scene').textContent = kol.drinking_scene || '-';
+    
+    // 地址信息
+    const provinceCityDistrict = [kol.province, kol.city, kol.district].filter(x => x).join('') || '-';
+    document.getElementById('province_city_district').textContent = provinceCityDistrict;
+    document.getElementById('street').textContent = kol.street || '-';
+    document.getElementById('detail_address').textContent = kol.detail_address || '-';
+    document.getElementById('position_note').textContent = kol.position_note || '-';
+    document.getElementById('location').textContent = kol.location || '-';
+    document.getElementById('receiver_name').textContent = kol.receiver_name || '-';
+    document.getElementById('receiver_phone').textContent = kol.receiver_phone || '-';
+    document.getElementById('receiver_address').textContent = kol.receiver_address || '-';
+    
+    // 标签和备注
+    document.getElementById('kol_tags').textContent = kol.kol_tags || '-';
+    document.getElementById('creator').textContent = kol.creator || '-';
+    document.getElementById('remark').textContent = kol.remark || '-';
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('kol-detail').style.display = 'block';
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

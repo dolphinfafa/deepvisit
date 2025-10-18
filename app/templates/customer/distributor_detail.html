@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}经销商详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-building"></i> 经销商详情
+                        <button class="btn btn-secondary btn-sm ml-2" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                    <div id="distributor-detail" style="display: none;">
+                        <!-- 基本信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> 基本信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>经销商名称：</label>
+                                    <p class="form-control-plaintext" id="name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>经销商编码：</label>
+                                    <p class="form-control-plaintext" id="code"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>经销商类型：</label>
+                                    <p class="form-control-plaintext" id="type"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户等级：</label>
+                                    <p class="form-control-plaintext" id="level"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>合作状态：</label>
+                                    <p class="form-control-plaintext" id="cooperation_status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>审批状态：</label>
+                                    <p class="form-control-plaintext" id="approval_status"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户经理：</label>
+                                    <p class="form-control-plaintext" id="manager"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>客户协助员：</label>
+                                    <p class="form-control-plaintext" id="assistant"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 联系信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-phone"></i> 联系信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>手机号：</label>
+                                    <p class="form-control-plaintext" id="phone"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>联系人姓名：</label>
+                                    <p class="form-control-plaintext" id="contact_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>联系人手机号：</label>
+                                    <p class="form-control-plaintext" id="contact_phone"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>收货人姓名：</label>
+                                    <p class="form-control-plaintext" id="receiver_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>收货人手机号：</label>
+                                    <p class="form-control-plaintext" id="receiver_phone"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>收货地址：</label>
+                                    <p class="form-control-plaintext" id="receiver_address"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 地址信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-map-marker-alt"></i> 地址信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label>详细地址：</label>
+                                    <p class="form-control-plaintext" id="detail_address"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>销售区域：</label>
+                                    <p class="form-control-plaintext" id="sales_area"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>供货商：</label>
+                                    <p class="form-control-plaintext" id="supplier"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 营业执照信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-certificate"></i> 营业执照信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>营业执照名称：</label>
+                                    <p class="form-control-plaintext" id="license_name"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>工商注册号：</label>
+                                    <p class="form-control-plaintext" id="registration_no"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>注册日期：</label>
+                                    <p class="form-control-plaintext" id="registration_date"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>经营者：</label>
+                                    <p class="form-control-plaintext" id="operator"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>营业执照：</label>
+                                    <div id="business_license_preview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 其他信息 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-tags"></i> 其他信息</h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>经销商标签：</label>
+                                    <p class="form-control-plaintext" id="tags"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>拜访频率：</label>
+                                    <p class="form-control-plaintext" id="visit_frequency"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>创建时间：</label>
+                                    <p class="form-control-plaintext" id="created_at"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>备注：</label>
+                                    <p class="form-control-plaintext" id="remark"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const distributorId = {{ id }};
+    loadDistributorDetail(distributorId);
+});
+
+async function loadDistributorDetail(id) {
+    try {
+        const response = await fetch(`/customer/api/distributor/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayDistributorDetail(result.data);
+        } else {
+            showAlert('加载失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('加载失败', 'error');
+    }
+}
+
+function displayDistributorDetail(distributor) {
+    // 基本信息
+    document.getElementById('name').textContent = distributor.name || '-';
+    document.getElementById('code').textContent = distributor.code || '-';
+    document.getElementById('type').textContent = distributor.type || '-';
+    document.getElementById('level').textContent = distributor.level || '-';
+    document.getElementById('cooperation_status').textContent = distributor.cooperation_status || '-';
+    document.getElementById('approval_status').textContent = distributor.approval_status || '-';
+    document.getElementById('manager').textContent = distributor.manager || '-';
+    document.getElementById('assistant').textContent = distributor.assistant || '-';
+    
+    // 联系信息
+    document.getElementById('phone').textContent = distributor.phone || '-';
+    document.getElementById('contact_name').textContent = distributor.contact_name || '-';
+    document.getElementById('contact_phone').textContent = distributor.contact_phone || '-';
+    document.getElementById('receiver_name').textContent = distributor.receiver_name || '-';
+    document.getElementById('receiver_phone').textContent = distributor.receiver_phone || '-';
+    document.getElementById('receiver_address').textContent = distributor.receiver_address || '-';
+    
+    // 地址信息
+    document.getElementById('detail_address').textContent = distributor.detail_address || '-';
+    document.getElementById('sales_area').textContent = distributor.sales_area || '-';
+    document.getElementById('supplier').textContent = distributor.supplier || '-';
+    
+    // 营业执照信息
+    document.getElementById('license_name').textContent = distributor.license_name || '-';
+    document.getElementById('registration_no').textContent = distributor.registration_no || '-';
+    document.getElementById('registration_date').textContent = distributor.registration_date || '-';
+    document.getElementById('operator').textContent = distributor.operator || '-';
+    
+    // 营业执照预览
+    const licensePreview = document.getElementById('business_license_preview');
+    if (distributor.business_license) {
+        licensePreview.innerHTML = `<a href="/static/${distributor.business_license}" target="_blank" class="btn btn-info btn-sm">
+            <i class="fas fa-eye"></i> 查看营业执照
+        </a>`;
+    } else {
+        licensePreview.innerHTML = '-';
+    }
+    
+    // 其他信息
+    document.getElementById('tags').textContent = distributor.tags || '-';
+    document.getElementById('visit_frequency').textContent = distributor.visit_frequency || '-';
+    document.getElementById('created_at').textContent = distributor.created_at ? new Date(distributor.created_at).toLocaleString() : '-';
+    document.getElementById('remark').textContent = distributor.remark || '-';
+    
+    // 隐藏加载状态，显示详情
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('distributor-detail').style.display = 'block';
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    document.querySelector('.card-body').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

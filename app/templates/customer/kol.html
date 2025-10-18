@@ -17,34 +17,32 @@
     <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th>KOL编码</th>
                 <th>KOL姓名</th>
-                <th>消费者类型</th>
+                <th>省市区</th>
+                <th>街道</th>
+                <th>详细地址</th>
+                <th>定位</th>
                 <th>性别</th>
-                <th>电话</th>
-                <th>年龄段</th>
-                <th>KOL标签</th>
+                <th>KOL编码</th>
                 <th>生日</th>
-                <th>所在地</th>
-                <th>职业</th>
+                <th>客户经理</th>
+                <th>个人爱好</th>
+                <th>所在城市</th>
+                <th>合作状态</th>
+                <th>电话</th>
+                <th>消费者类型</th>
+                <th>备注</th>
+                <th>年龄段</th>
                 <th>饮酒频率</th>
                 <th>用酒场景</th>
-                <th>合作状态</th>
-                <th>客户经理</th>
-                <th>标注位置</th>
-                <th>省</th>
-                <th>市</th>
-                <th>区</th>
-                <th>详细地址</th>
-                <th>收货人姓名</th>
-                <th>收货人手机</th>
-                <th>收货地址</th>
+                <th>创建人</th>
+                <th>创建时间</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <tr>
-                <td colspan="23" style="text-align: center; padding: 40px;">加载中...</td>
+                <td colspan="21" style="text-align: center; padding: 40px;">加载中...</td>
             </tr>
         </tbody>
     </table>
@@ -210,39 +208,58 @@
         const tbody = document.getElementById('tableBody');
         
         if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="23" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 40px;">暂无数据</td></tr>';
             return;
         }
         
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td>${item.code || '-'}</td>
                 <td>${item.name || '-'}</td>
-                <td>${item.consumer_type || '-'}</td>
+                <td>${[item.province, item.city, item.district].filter(x => x).join('') || '-'}</td>
+                <td>${item.street || '-'}</td>
+                <td>${item.detail_address || '-'}</td>
+                <td>${item.position_note || '-'}</td>
                 <td>${item.gender || '-'}</td>
-                <td>${item.phone || '-'}</td>
-                <td>${item.age_group || '-'}</td>
-                <td>${item.kol_tags || '-'}</td>
+                <td>${item.code || '-'}</td>
                 <td>${formatDate(item.birthday)}</td>
+                <td>${item.manager || '-'}</td>
+                <td>${item.hobbies || '-'}</td>
                 <td>${item.location || '-'}</td>
-                <td>${item.profession || '-'}</td>
+                <td><span class="badge badge-success">${item.cooperation_status || '-'}</span></td>
+                <td>${item.phone || '-'}</td>
+                <td>${item.consumer_type || '-'}</td>
+                <td>${item.remark || '-'}</td>
+                <td>${item.age_group || '-'}</td>
                 <td>${item.drinking_frequency || '-'}</td>
                 <td>${item.drinking_scene || '-'}</td>
-                <td><span class="badge badge-success">${item.cooperation_status || '-'}</span></td>
-                <td>${item.manager || '-'}</td>
-                <td>${item.position_note || '-'}</td>
-                <td>${item.province || '-'}</td>
-                <td>${item.city || '-'}</td>
-                <td>${item.district || '-'}</td>
-                <td>${item.detail_address || '-'}</td>
-                <td>${item.receiver_name || '-'}</td>
-                <td>${item.receiver_phone || '-'}</td>
-                <td>${item.receiver_address || '-'}</td>
+                <td>${item.creator || '-'}</td>
+                <td>${formatDate(item.created_at)}</td>
                 <td>
-                    <button class="btn" style="padding: 5px 10px; font-size: 12px;">查看</button>
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="viewDetail(${item.id})">详情</button>
+                    <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="deleteItem(${item.id})">删除</button>
                 </td>
             </tr>
         `).join('');
+    }
+    
+    function viewDetail(id) {
+        window.location.href = `/customer/kol/${id}`;
+    }
+    
+    function deleteItem(id) {
+        if (!confirm('确定要删除这个KOL客户吗？')) return;
+        
+        fetch(`/customer/api/kol/${id}`, {
+            method: 'DELETE'
+        }).then(response => response.json())
+        .then(data => {
+            if (data && data.success) {
+                showMessage('删除成功');
+                loadData();
+            } else {
+                showMessage('删除失败');
+            }
+        });
     }
     
     function renderPagination(total, perPage, current) {
