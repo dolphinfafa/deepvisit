@@ -21,7 +21,7 @@
         {% endif %}
     {% endwith %}
     
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="horizontal-layout">
             <div class="form-group">
                 <label for="report_date">上报日期 <span style="color: red;">*</span></label>
@@ -92,6 +92,18 @@
                 <input type="text" class="form-control" id="brand" name="brand" 
                        value="{{ report.brand or '' }}">
             </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="photo">更新照片</label>
+            {% if report.photo %}
+            <div style="margin-bottom: 10px;">
+                <img src="{{ url_for('static', filename=report.photo) }}" alt="当前照片" style="max-width: 300px; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; padding: 5px;">
+                <p class="text-muted" style="margin-top: 5px;">当前照片（选择新照片将替换此照片）</p>
+            </div>
+            {% endif %}
+            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+            <small class="form-text text-muted">支持格式：JPG、PNG、GIF，最大16MB</small>
         </div>
         
         <div class="form-group">

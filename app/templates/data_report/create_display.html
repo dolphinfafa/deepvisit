@@ -21,7 +21,7 @@
         {% endif %}
     {% endwith %}
     
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="horizontal-layout">
             <div class="form-group">
                 <label for="report_date">上报日期 <span style="color: red;">*</span></label>
@@ -87,6 +87,12 @@
                 <label for="brand">品牌</label>
                 <input type="text" class="form-control" id="brand" name="brand" readonly>
             </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="photo">上传照片</label>
+            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+            <small class="form-text text-muted">支持格式：JPG、PNG、GIF，最大16MB</small>
         </div>
         
         <div class="form-group">

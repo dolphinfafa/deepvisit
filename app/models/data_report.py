@@ -19,6 +19,7 @@ class DisplayReport(db.Model):
     product_type = db.Column(db.String(32))  # 商品类型
     brand = db.Column(db.String(64))  # 品牌
     reported_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # 上报人
+    photo = db.Column(db.String(255))  # 照片路径
     remark = db.Column(db.Text)  # 备注
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -50,6 +51,7 @@ class DisplayReport(db.Model):
             'product_type': self.product_type,
             'brand': self.brand,
             'reported_by': self.reporter.name if self.reporter else None,
+            'photo': self.photo,
             'remark': self.remark,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
@@ -66,6 +68,7 @@ class InventoryReport(db.Model):
     specification = db.Column(db.String(64))  # 规格
     product_code = db.Column(db.String(64))  # 商品编码
     quantity = db.Column(db.Integer, nullable=False)  # 库存数量
+    photo = db.Column(db.String(255))  # 照片路径
     remark = db.Column(db.Text)  # 备注
     reported_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # 上报人
     report_time = db.Column(db.DateTime, default=datetime.utcnow)  # 上报时间
@@ -93,6 +96,7 @@ class InventoryReport(db.Model):
             'specification': self.specification,
             'product_code': self.product_code,
             'quantity': self.quantity,
+            'photo': self.photo,
             'remark': self.remark,
             'reported_by': self.reporter.name if self.reporter else None,
             'report_time': self.report_time.isoformat() if self.report_time else None,
@@ -108,6 +112,7 @@ class CompetitorReport(db.Model):
     report_code = db.Column(db.String(64), unique=True, nullable=False)  # 上报编码
     competitor_name = db.Column(db.String(128), nullable=False)  # 竞品名称
     product_name = db.Column(db.String(128))  # 商品名称（我方商品）
+    photo = db.Column(db.String(255))  # 照片路径
     remark = db.Column(db.Text)  # 备注
     reported_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # 上报人
     report_time = db.Column(db.DateTime, default=datetime.utcnow)  # 上报时间
@@ -132,6 +137,7 @@ class CompetitorReport(db.Model):
             'report_code': self.report_code,
             'competitor_name': self.competitor_name,
             'product_name': self.product_name,
+            'photo': self.photo,
             'remark': self.remark,
             'reported_by': self.reporter.name if self.reporter else None,
             'report_time': self.report_time.isoformat() if self.report_time else None,

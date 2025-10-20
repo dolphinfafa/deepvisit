@@ -1,12 +1,52 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, current_app, send_from_directory
 from flask_login import login_required, current_user
 from app import db
 from app.models.data_report import DisplayReport, InventoryReport, CompetitorReport
 from app.models.customer import Terminal, DirectDistributor, KOL
 from app.models.product import Product
 from datetime import datetime
+import os
+from werkzeug.utils import secure_filename
+import uuid
 
 bp = Blueprint('data_report', __name__, url_prefix='/data_report')
+
+# ==================== 文件上传辅助函数 ====================
+
+def allowed_file(filename):
+    """检查文件扩展名是否允许"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_uploaded_file(file, prefix=''):
+    """保存上传的文件并返回文件路径"""
+    if file and allowed_file(file.filename):
+        # 生成唯一的文件名
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{prefix}_{uuid.uuid4().hex[:8]}.{ext}"
+        
+        # 确保uploads目录存在
+        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'data_reports')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # 保存文件
+        filepath = os.path.join(upload_folder, unique_filename)
+        file.save(filepath)
+        
+        # 返回相对路径（用于数据库存储）
+        return f"uploads/data_reports/{unique_filename}"
+    return None
+
+def delete_uploaded_file(filepath):
+    """删除已上传的文件"""
+    if filepath:
+        try:
+            full_path = os.path.join(current_app.root_path, 'static', filepath)
+            if os.path.exists(full_path):
+                os.remove(full_path)
+        except Exception as e:
+            print(f"删除文件失败: {str(e)}")
 
 # ==================== 铺货上报 ====================
 
@@ -39,6 +79,13 @@ def create_display():
                 flash('上报日期、客户名称、商品编码和商品名称不能为空', 'error')
                 return render_template('data_report/create_display.html')
             
+            # 处理照片上传
+            photo_path = None
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename != '':
+                    photo_path = save_uploaded_file(photo, prefix='display')
+            
             report = DisplayReport(
                 report_date=datetime.strptime(report_date, '%Y-%m-%d').date(),
                 customer_name=customer_name,
@@ -50,6 +97,7 @@ def create_display():
                 specification=specification,
                 product_type=product_type,
                 brand=brand,
+                photo=photo_path,
                 remark=remark,
                 reported_by=current_user.id
             )
@@ -86,6 +134,16 @@ def edit_display(report_id):
             report.product_type = request.form.get('product_type')
             report.brand = request.form.get('brand')
             report.remark = request.form.get('remark')
+            
+            # 处理照片上传
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename != '':
+                    # 删除旧照片
+                    if report.photo:
+                        delete_uploaded_file(report.photo)
+                    # 保存新照片
+                    report.photo = save_uploaded_file(photo, prefix='display')
             
             db.session.commit()
             flash('铺货上报更新成功', 'success')
@@ -138,12 +196,20 @@ def create_inventory():
                 flash('客户名称、商品名称和库存数量不能为空', 'error')
                 return render_template('data_report/create_inventory.html')
             
+            # 处理照片上传
+            photo_path = None
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename != '':
+                    photo_path = save_uploaded_file(photo, prefix='inventory')
+            
             report = InventoryReport(
                 customer_name=customer_name,
                 product_name=product_name,
                 specification=specification,
                 product_code=product_code,
                 quantity=int(quantity),
+                photo=photo_path,
                 remark=remark,
                 reported_by=current_user.id
             )
@@ -174,6 +240,16 @@ def edit_inventory(report_id):
             report.product_code = request.form.get('product_code')
             report.quantity = int(request.form.get('quantity'))
             report.remark = request.form.get('remark')
+            
+            # 处理照片上传
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename != '':
+                    # 删除旧照片
+                    if report.photo:
+                        delete_uploaded_file(report.photo)
+                    # 保存新照片
+                    report.photo = save_uploaded_file(photo, prefix='inventory')
             
             db.session.commit()
             flash('库存上报更新成功', 'success')
@@ -223,9 +299,17 @@ def create_competitor():
                 flash('竞品名称不能为空', 'error')
                 return render_template('data_report/create_competitor.html')
             
+            # 处理照片上传
+            photo_path = None
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename != '':
+                    photo_path = save_uploaded_file(photo, prefix='competitor')
+            
             report = CompetitorReport(
                 competitor_name=competitor_name,
                 product_name=product_name,
+                photo=photo_path,
                 remark=remark,
                 reported_by=current_user.id
             )
@@ -253,6 +337,16 @@ def edit_competitor(report_id):
             report.competitor_name = request.form.get('competitor_name')
             report.product_name = request.form.get('product_name')
             report.remark = request.form.get('remark')
+            
+            # 处理照片上传
+            if 'photo' in request.files:
+                photo = request.files['photo']
+                if photo and photo.filename != '':
+                    # 删除旧照片
+                    if report.photo:
+                        delete_uploaded_file(report.photo)
+                    # 保存新照片
+                    report.photo = save_uploaded_file(photo, prefix='competitor')
             
             db.session.commit()
             flash('竞品上报更新成功', 'success')

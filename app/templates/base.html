@@ -167,10 +167,13 @@
         
         .table th,
         .table td {
-            padding: 16px 12px;
+            padding: 16px 12px !important;
             text-align: left;
             border-bottom: 1px solid #eee;
             font-size: 15px;
+            line-height: 1.6;
+            vertical-align: middle;
+            height: auto;
         }
         
         .table th {
@@ -178,6 +181,7 @@
             font-weight: 600;
             color: #495057;
             font-size: 16px;
+            padding: 16px 12px !important;
         }
         
         .table tr:hover {
@@ -227,6 +231,18 @@
             font-size: 15px;
             flex: 1;
             max-width: 350px;
+            line-height: 1.5;
+            height: 44px;
+        }
+        
+        .search-bar select {
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.5;
+            height: 44px;
+            min-width: 150px;
         }
         
         .pagination {
@@ -298,6 +314,57 @@
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 15px;
+            line-height: 1.5;
+            height: auto;
+            min-height: 44px;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        /* Bootstrap form-control 样式增强 */
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 15px;
+            line-height: 1.5 !important;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            height: auto !important;
+            min-height: 44px;
+        }
+        
+        .form-control:focus {
+            color: #495057;
+            background-color: #fff;
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        select.form-control {
+            padding: 0.5rem 0.75rem !important;
+            height: 44px !important;
+            line-height: 1.5 !important;
+        }
+        
+        select.form-control option {
+            padding: 8px 12px;
+            line-height: 1.6;
+            min-height: 32px;
+        }
+        
+        textarea.form-control {
+            min-height: 80px;
+            height: auto !important;
+            resize: vertical;
         }
         
         /* 横向布局样式 */
